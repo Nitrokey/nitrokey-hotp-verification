@@ -31,8 +31,8 @@ struct Device dev;
 
 int parse_cmd_and_run(int argc, char *const *argv);
 
-void print_welcome(){
-  printf("HOTP code verification application via Nitrokey Pro, version %s\n", VERSION);
+void print_welcome(char* key_brand){
+  printf("HOTP code verification application via %s, version %s\n", key_brand, VERSION);
 }
 
 void print_help(char* app_name) {
@@ -47,14 +47,21 @@ void print_help(char* app_name) {
 
 
 int main(int argc, char* argv[]) {
-  print_welcome();
+  char *librem_exec = "libremkey";
+  char *key_brand;
+  if(strstr(argv[0], librem_exec) != NULL) {
+    key_brand = "Librem Key";
+  } else {
+    key_brand = "Nitrokey Pro";
+  }
+  print_welcome(key_brand);
 
   int res;
 
   if(argc != 1){
-    res = device_connect(&dev);
+    res = device_connect(&dev, key_brand);
     if (res != true){
-      printf("Could not connect with the Nitrokey Pro device\n");
+      printf("Could not connect with the %s device\n", key_brand);
       return EXIT_CONNECTION_ERROR;
     }
   }
