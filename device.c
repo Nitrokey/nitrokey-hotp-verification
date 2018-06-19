@@ -103,7 +103,7 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
 }
 
 
-int device_connect(struct Device *dev) {
+int device_connect(struct Device *dev, char *key_brand) {
   bool res;
 
   if (dev->mp_devhandle != nullptr)
@@ -113,7 +113,7 @@ int device_connect(struct Device *dev) {
   res = dev->mp_devhandle != nullptr;
 
   if (!res){
-    fprintf(stderr, "Trying to connect to Nitrokey Pro: ");
+    fprintf(stderr, "Trying to connect to %s: ", key_brand);
     for (int i=0; i < CONNECTION_ATTEMPTS_COUNT; i++){
       dev->mp_devhandle = hid_open(m_vid, m_pid, nullptr);
       res = dev->mp_devhandle != nullptr;
