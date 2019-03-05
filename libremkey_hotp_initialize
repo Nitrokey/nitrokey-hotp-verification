@@ -16,7 +16,7 @@ SECRET=$2
 COUNTER=$3
 SECRET_B32=$(echo -n $SECRET | base32)
 
-echo libremkey_hotp_verification set $SECRET_B32 $PIN 
+#echo libremkey_hotp_verification set $SECRET_B32 $PIN 
 libremkey_hotp_verification set $SECRET_B32 $PIN 
 if [ $? -ne 0 ]; then
   echo "ERROR: Setting HOTP secret on Librem Key failed!"
