@@ -38,7 +38,7 @@ struct Device {
   uint8_t admin_temporary_password[TEMPORARY_PASSWORD_LENGTH];
 };
 
-int device_connect(struct Device* dev, char *key_brand);
+int device_connect(struct Device* dev, const char *key_brand);
 int device_disconnect(struct Device* dev);
 struct ResponseStatus device_get_status(struct Device *dev);
 int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t command_ID);
