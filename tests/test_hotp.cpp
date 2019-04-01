@@ -155,3 +155,18 @@ TEST_CASE("Verify base32 string", "[Helper]") {
   REQUIRE_FALSE(verify_base32(invalid_base32.c_str(), invalid_base32.length()));
   REQUIRE(verify_base32(valid_base32.c_str(), valid_base32.length()));
 }
+
+#include "../base32.h"
+#include <cstring>
+TEST_CASE("Verify base32 string of secret containing null byte", "[Helper]") {
+//  https://github.com/Nitrokey/nitrokey-hotp-verification/issues/6
+  std::string secret_base32 = "JVOKTGWL6TWLRQBKUEEUYVGRJZQBM2EH";
+  REQUIRE(verify_base32(secret_base32.c_str(), secret_base32.length()));
+  const int secret_size_bytes = 20;
+  const size_t base32_string_length_limit = BASE32_LEN(secret_size_bytes);
+  const size_t OTP_secret_base32_length = strnlen(secret_base32.c_str(), base32_string_length_limit);
+  const bool base32_valid = secret_base32.c_str() != nullptr && OTP_secret_base32_length > 0
+                            && OTP_secret_base32_length <= base32_string_length_limit
+                            && verify_base32(secret_base32.c_str(), OTP_secret_base32_length);
+  REQUIRE(base32_valid);
+}
