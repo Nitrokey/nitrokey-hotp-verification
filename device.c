@@ -31,8 +31,10 @@
 #include "min.h"
 #include "return_codes.h"
 
-const unsigned short m_vid = 0x20a0;
-const unsigned short m_pid = 0x4108;
+#define NITROKEY_PRO_USB_VID 0x20a0
+#define NITROKEY_PRO_USB_PID 0x4108
+#define LIBREM_KEY_USB_VID 0x316d
+#define LIBREM_KEY_USB_PID 0x4c4b
 
 static const int CONNECTION_ATTEMPTS_COUNT = 80;
 
@@ -104,27 +106,39 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
 
 
 int device_connect(struct Device *dev, char *key_brand) {
-  bool res;
+  int count = CONNECTION_ATTEMPTS_COUNT;
+  unsigned short m_vid;
+  unsigned short m_pid;
 
   if (dev->mp_devhandle != nullptr)
     return 1;
 
-  dev->mp_devhandle = hid_open(m_vid, m_pid, nullptr);
-  res = dev->mp_devhandle != nullptr;
+  while (count-- > 0) {
+    m_vid = NITROKEY_PRO_USB_VID;
+    m_pid = NITROKEY_PRO_USB_PID;
+    dev->mp_devhandle = hid_open(m_vid, m_pid, nullptr);
+    if (dev->mp_devhandle != NULL)
+      break;
 
-  if (!res){
-    fprintf(stderr, "Trying to connect to %s: ", key_brand);
-    for (int i=0; i < CONNECTION_ATTEMPTS_COUNT; i++){
-      dev->mp_devhandle = hid_open(m_vid, m_pid, nullptr);
-      res = dev->mp_devhandle != nullptr;
-      usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
-      if (res == true) break;
-      fprintf(stderr, "."); fflush(stderr);
-    }
-    fprintf(stderr, "\n"); fflush(stderr);
+    m_vid = LIBREM_KEY_USB_VID;
+    m_pid = LIBREM_KEY_USB_PID;
+    dev->mp_devhandle = hid_open(m_vid, m_pid, nullptr);
+    if (dev->mp_devhandle != NULL)
+      break;
+
+    if (count == CONNECTION_ATTEMPTS_COUNT)
+      fprintf(stderr, "Trying to connect to %s: ", key_brand);
+    else
+      fprintf(stderr, ".");
+    fflush(stderr);
+    usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
   }
+  fprintf(stderr, "\n"); fflush(stderr);
 
-  return res;
+  if (dev->mp_devhandle != nullptr)
+    return true;
+  else
+    return false;
 }
 
 int device_disconnect(struct Device *dev) {
