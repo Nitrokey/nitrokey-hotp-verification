@@ -115,7 +115,7 @@ int parse_cmd_and_run(int argc, char *const *argv) {
         {
           uint64_t counter = 0;
           if (argc==5){
-            counter = strtoull(argv[4], nullptr,10);
+            counter = strtol10_s(argv[4]);
           }
           res = set_secret_on_device(&dev, argv[2], argv[3], counter);
         }

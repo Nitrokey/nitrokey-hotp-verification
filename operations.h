@@ -36,6 +36,6 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
 int check_code_on_device(struct Device *dev, const char *HOTP_code_to_verify);
 bool verify_base32(const char* string, size_t len);
 
-
+long strtol10_s(const char *string);
 
 #endif //NITROKEY_HOTP_VERIFICATION_OPERATIONS_H
