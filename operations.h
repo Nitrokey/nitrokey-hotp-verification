@@ -32,7 +32,7 @@ static const int HOTP_MIN_INT = 0;
 #include "return_codes.h"
 #include "device.h"
 
-int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, const char *admin_PIN);
+int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, const char *admin_PIN, const uint64_t hotp_counter);
 int check_code_on_device(struct Device *dev, const char *HOTP_code_to_verify);
 bool verify_base32(const char* string, size_t len);
 

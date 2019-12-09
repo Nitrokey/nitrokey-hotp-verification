@@ -49,7 +49,7 @@ bool verify_base32(const char* string, size_t len){
   return true;
 }
 
-int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, const char *admin_PIN) {
+int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, const char *admin_PIN, const uint64_t hotp_counter) {
   int res;
   //Make sure secret is parsable
 #define secret_size_bytes (20)
@@ -101,7 +101,7 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
   //execute write OTP on device
   struct WriteToOTPSlot writeToOTPSlot = {0};
   writeToOTPSlot.slot_number = get_internal_slot_number_for_hotp(HOTP_SLOT_NUMBER);
-  writeToOTPSlot.slot_counter_or_interval = 0;
+  writeToOTPSlot.slot_counter_or_interval = hotp_counter;
   writeToOTPSlot.use_8_digits = HOTP_CODE_USE_8_DIGITS;
   memcpy(writeToOTPSlot.temporary_admin_password, dev->admin_temporary_password,
          min(sizeof(writeToOTPSlot.temporary_admin_password), sizeof(dev->admin_temporary_password)));

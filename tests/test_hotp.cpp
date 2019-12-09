@@ -50,9 +50,24 @@ TEST_CASE("Test correct codes", "[HOTP]") {
   int res;
   res = device_connect(&dev, key_brand);
   REQUIRE(res == true);
-  res = set_secret_on_device(&dev, base32_secret, admin_PIN);
+  res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
   for (auto c: RFC_HOTP_codes){
+    res = check_code_on_device(&dev, c);
+    REQUIRE(res == RET_VALIDATION_PASSED);
+  }
+  device_disconnect(&dev);
+}
+
+
+TEST_CASE("Test correct codes set with initial counter value", "[HOTP]") {
+  int res;
+  res = device_connect(&dev, key_brand);
+  REQUIRE(res == true);
+  int code = 0;
+  for (auto c: RFC_HOTP_codes){
+    res = set_secret_on_device(&dev, base32_secret, admin_PIN, code++);
+    REQUIRE(res == RET_NO_ERROR);
     res = check_code_on_device(&dev, c);
     REQUIRE(res == RET_VALIDATION_PASSED);
   }
@@ -63,7 +78,7 @@ TEST_CASE("Test incorrect codes", "[HOTP]") {
   int res;
   res = device_connect(&dev, key_brand);
   REQUIRE(res == true);
-  res = set_secret_on_device(&dev, base32_secret, admin_PIN);
+  res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
 
   for (int i=0; i<10; i++){
@@ -79,7 +94,7 @@ TEST_CASE("Test codes with offset 2", "[HOTP]") {
   int res;
   res = device_connect(&dev, key_brand);
   REQUIRE(res == true);
-  res = set_secret_on_device(&dev, base32_secret, admin_PIN);
+  res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
 
   int i=0;
@@ -96,7 +111,7 @@ TEST_CASE("Test code with maximum offsets", "[HOTP]") {
   int res;
   res = device_connect(&dev, key_brand);
   REQUIRE(res == true);
-  res = set_secret_on_device(&dev, base32_secret, admin_PIN);
+  res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
 
 
@@ -126,19 +141,19 @@ TEST_CASE("Try to set the HOTP secret with wrong PIN and test PIN counters", "[H
   struct ResponseStatus status = device_get_status(&dev);
   REQUIRE(status.retry_admin >= 2);
 
-  res = set_secret_on_device(&dev, base32_secret, admin_PIN);
+  res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
   status = device_get_status(&dev);
   REQUIRE(status.retry_admin == 3);
   REQUIRE(check_code_on_device(&dev, RFC_HOTP_codes[0]) == RET_VALIDATION_PASSED);
 
-  res = set_secret_on_device(&dev, base32_secret, "wrong_PIN");
+  res = set_secret_on_device(&dev, base32_secret, "wrong_PIN", 0);
   REQUIRE(res == dev_wrong_password);
   status = device_get_status(&dev);
   REQUIRE(status.retry_admin == 2);
   REQUIRE(check_code_on_device(&dev, RFC_HOTP_codes[0]) == RET_VALIDATION_FAILED);
 
-  res = set_secret_on_device(&dev, base32_secret, admin_PIN);
+  res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
   status = device_get_status(&dev);
   REQUIRE(status.retry_admin == 3);

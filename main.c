@@ -111,8 +111,14 @@ int parse_cmd_and_run(int argc, char *const *argv) {
         res = check_code_on_device(&dev, argv[2]);
         break;
       case 's':
-        if (argc != 4) break;
-        res = set_secret_on_device(&dev, argv[2], argv[3]);
+        if (argc != 4 && argc !=5 ) break;
+        {
+          uint64_t counter = 0;
+          if (argc==5){
+            counter = strtoull(argv[4], nullptr,10);
+          }
+          res = set_secret_on_device(&dev, argv[2], argv[3], counter);
+        }
         break;
       default:
         break;
