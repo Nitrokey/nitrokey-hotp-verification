@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
   if(strstr(argv[0], librem_exec) != NULL) {
     key_brand = "Librem Key";
   } else {
-    key_brand = "Nitrokey Pro";
+    key_brand = "Nitrokey";
   }
   print_welcome(key_brand);
 

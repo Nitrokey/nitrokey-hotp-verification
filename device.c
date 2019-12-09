@@ -37,11 +37,6 @@
 #define LIBREM_KEY_USB_VID        0x316d
 #define LIBREM_KEY_USB_PID        0x4c4b
 
-typedef struct VidPid {
-  uint16_t vid;
-  uint16_t pid;
-  const char* name;
-} VidPid;
 
 const VidPid devices[] = {
       {NITROKEY_PRO_USB_VID, NITROKEY_PRO_USB_PID, "Nitrokey Pro"},
@@ -119,7 +114,6 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
   return RET_NO_ERROR;
 }
 
-
 int device_connect(struct Device *dev, const char *key_brand) {
   int count = CONNECTION_ATTEMPTS_COUNT;
 
@@ -130,8 +124,11 @@ int device_connect(struct Device *dev, const char *key_brand) {
     for (size_t dev_id = 0; dev_id < devices_size; ++dev_id) {
       const VidPid vidPid = devices[dev_id];
       dev->mp_devhandle = hid_open(vidPid.vid, vidPid.pid, nullptr);
-      if (dev->mp_devhandle != nullptr)
+      if (dev->mp_devhandle != nullptr){
+        dev->dev_info = vidPid;
+        fprintf(stderr, "Connected to %s. \n", dev->dev_info.name);
         return true;
+      }
       usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
     }
     if (count == CONNECTION_ATTEMPTS_COUNT)

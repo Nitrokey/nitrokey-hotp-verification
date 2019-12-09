@@ -29,9 +29,15 @@
 #define nullptr (NULL)
 #define TEMPORARY_PASSWORD_LENGTH (25)
 
+typedef struct VidPid {
+  uint16_t vid;
+  uint16_t pid;
+  const char* name;
+} VidPid;
 
 struct Device {
   hid_device * mp_devhandle;
+  VidPid dev_info;
   struct DeviceQuery packet_query;
   struct DeviceResponse packet_response;
   uint8_t user_temporary_password[TEMPORARY_PASSWORD_LENGTH];
