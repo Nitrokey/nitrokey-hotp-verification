@@ -31,10 +31,22 @@
 #include "min.h"
 #include "return_codes.h"
 
-#define NITROKEY_PRO_USB_VID 0x20a0
-#define NITROKEY_PRO_USB_PID 0x4108
-#define LIBREM_KEY_USB_VID 0x316d
-#define LIBREM_KEY_USB_PID 0x4c4b
+#define NITROKEY_PRO_USB_VID      0x20a0
+#define NITROKEY_PRO_USB_PID      0x4108
+#define NITROKEY_STORAGE_USB_PID  0x4109
+#define LIBREM_KEY_USB_VID        0x316d
+#define LIBREM_KEY_USB_PID        0x4c4b
+
+typedef struct VidPid {
+  uint16_t vid;
+  uint16_t pid;
+} VidPid;
+
+const VidPid devices[] = {
+      {NITROKEY_PRO_USB_VID, NITROKEY_PRO_USB_PID},
+      {NITROKEY_PRO_USB_VID, NITROKEY_STORAGE_USB_PID},
+      {LIBREM_KEY_USB_VID, LIBREM_KEY_USB_PID},
+};
 
 static const int CONNECTION_ATTEMPTS_COUNT = 80;
 
@@ -107,31 +119,24 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
 
 int device_connect(struct Device *dev, const char *key_brand) {
   int count = CONNECTION_ATTEMPTS_COUNT;
-  unsigned short m_vid;
-  unsigned short m_pid;
 
   if (dev->mp_devhandle != nullptr)
     return 1;
 
   while (count-- > 0) {
-    m_vid = NITROKEY_PRO_USB_VID;
-    m_pid = NITROKEY_PRO_USB_PID;
-    dev->mp_devhandle = hid_open(m_vid, m_pid, nullptr);
-    if (dev->mp_devhandle != NULL)
-      break;
+    for (size_t dev_id = 0; dev_id < sizeof(devices); ++dev_id) {
+      const VidPid vidPid = devices[dev_id];
+      dev->mp_devhandle = hid_open(vidPid.vid, vidPid.pid, nullptr);
+      if (dev->mp_devhandle != NULL)
+        break;
 
-    m_vid = LIBREM_KEY_USB_VID;
-    m_pid = LIBREM_KEY_USB_PID;
-    dev->mp_devhandle = hid_open(m_vid, m_pid, nullptr);
-    if (dev->mp_devhandle != NULL)
-      break;
-
-    if (count == CONNECTION_ATTEMPTS_COUNT)
-      fprintf(stderr, "Trying to connect to %s: ", key_brand);
-    else
-      fprintf(stderr, ".");
-    fflush(stderr);
-    usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
+      if (count == CONNECTION_ATTEMPTS_COUNT)
+        fprintf(stderr, "Trying to connect to %s: ", key_brand);
+      else
+        fprintf(stderr, ".");
+      fflush(stderr);
+      usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
+    }
   }
   fprintf(stderr, "\n"); fflush(stderr);
 
