@@ -191,6 +191,67 @@ typedef struct {
   uint32_t otp_code_to_verify;
 } __packed cmd_query_verify_code;
 
+struct TransmissionData{
+  uint8_t _padding[storage_status_padding_size];
+
+  uint8_t SendCounter_u8;
+  uint8_t SendDataType_u8;
+  uint8_t FollowBytesFlag_u8;
+  uint8_t SendSize_u8;
+} __packed;
+
+struct StatusPayload {
+  struct TransmissionData transmission_data;
+
+  uint16_t MagicNumber_StickConfig_u16;
+  /**
+   * READ_WRITE_ACTIVE = ReadWriteFlagUncryptedVolume_u8 == 0;
+   */
+  uint8_t ReadWriteFlagUncryptedVolume_u8;
+  uint8_t ReadWriteFlagCryptedVolume_u8;
+
+  union{
+    uint8_t VersionInfo_au8[4];
+    struct {
+      uint8_t major;
+      uint8_t minor;
+      uint8_t _reserved2;
+      uint8_t build_iteration;
+    } __packed versionInfo;
+  } __packed;
+
+  uint8_t ReadWriteFlagHiddenVolume_u8;
+  uint8_t FirmwareLocked_u8;
+
+  union{
+    uint8_t NewSDCardFound_u8;
+    struct {
+      bool NewCard :1;
+      uint8_t Counter :7;
+    } __packed NewSDCardFound_st;
+  } __packed;
+
+  /**
+   * SD card FILLED with random chars
+   */
+  uint8_t SDFillWithRandomChars_u8;
+  uint32_t ActiveSD_CardID_u32;
+  union{
+    uint8_t VolumeActiceFlag_u8;
+    struct {
+      bool unencrypted :1;
+      bool encrypted :1;
+      bool hidden :1;
+    } __packed VolumeActiceFlag_st;
+  } __packed;
+  uint8_t NewSmartCardFound_u8;
+  uint8_t UserPwRetryCount;
+  uint8_t AdminPwRetryCount;
+  uint32_t ActiveSmartCardID_u32;
+  uint8_t StickKeysNotInitiated;
+
+} __packed;
+
 #pragma pack (pop)
 #endif //NITROKEY_HOTP_VERIFICATION_STRUCTS_H
 
