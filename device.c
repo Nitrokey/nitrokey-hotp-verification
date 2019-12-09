@@ -49,6 +49,8 @@ const VidPid devices[] = {
       {NITROKEY_PRO_USB_VID, NITROKEY_STORAGE_USB_PID, "Nitrokey Storage"},
 };
 
+const size_t devices_size = sizeof(devices)/ sizeof(devices[0]);
+
 static const int CONNECTION_ATTEMPTS_COUNT = 80;
 
 static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000*1000/3;
@@ -125,25 +127,21 @@ int device_connect(struct Device *dev, const char *key_brand) {
     return 1;
 
   while (count-- > 0) {
-    for (size_t dev_id = 0; dev_id < sizeof(devices); ++dev_id) {
+    for (size_t dev_id = 0; dev_id < devices_size; ++dev_id) {
       const VidPid vidPid = devices[dev_id];
       dev->mp_devhandle = hid_open(vidPid.vid, vidPid.pid, nullptr);
-      if (dev->mp_devhandle != NULL)
-        break;
-
-      if (count == CONNECTION_ATTEMPTS_COUNT)
-        fprintf(stderr, "Trying to connect to %s: ", key_brand);
-      else
-        fprintf(stderr, ".");
-      fflush(stderr);
+      if (dev->mp_devhandle != nullptr)
+        return true;
       usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
     }
+    if (count == CONNECTION_ATTEMPTS_COUNT)
+      fprintf(stderr, "Trying to connect to %s: ", key_brand);
+    else
+      fprintf(stderr, ".");
+    fflush(stderr);
   }
   fprintf(stderr, "\n"); fflush(stderr);
 
-  if (dev->mp_devhandle != nullptr)
-    return true;
-  else
     return false;
 }
 
