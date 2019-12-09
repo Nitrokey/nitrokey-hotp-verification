@@ -40,17 +40,18 @@
 typedef struct VidPid {
   uint16_t vid;
   uint16_t pid;
+  const char* name;
 } VidPid;
 
 const VidPid devices[] = {
-      {NITROKEY_PRO_USB_VID, NITROKEY_PRO_USB_PID},
-      {NITROKEY_PRO_USB_VID, NITROKEY_STORAGE_USB_PID},
-      {LIBREM_KEY_USB_VID, LIBREM_KEY_USB_PID},
+      {NITROKEY_PRO_USB_VID, NITROKEY_PRO_USB_PID, "Nitrokey Pro"},
+      {LIBREM_KEY_USB_VID, LIBREM_KEY_USB_PID, "Librem Key"},
+      {NITROKEY_PRO_USB_VID, NITROKEY_STORAGE_USB_PID, "Nitrokey Storage"},
 };
 
 static const int CONNECTION_ATTEMPTS_COUNT = 80;
 
-static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000*1000/2;
+static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000*1000/3;
 
 int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size) {
   const int receive_attempts = 10;
