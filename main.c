@@ -40,8 +40,8 @@ void print_help(char* app_name) {
          "\t%s id\n"
          "\t%s info\n"
          "\t%s version\n"
-         "\t%s check HOTP_CODE\n"
-         "\t%s set BASE32_HOTP_SECRET ADMIN_PIN [COUNTER]\n",
+         "\t%s check <HOTP CODE>\n"
+         "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]\n",
          app_name, app_name, app_name, app_name, app_name);
 }
 
