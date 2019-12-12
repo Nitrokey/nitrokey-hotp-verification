@@ -47,21 +47,25 @@ cmake .. -DADD_GIT_INFO=OFF -DCMAKE_BUILD_TYPE=Release
 ## Usage
 Before each device-related command a connection attempt will be done. If the Nitrokey Pro will not be detected immediately, the tool will monit for its insertion and will wait for 40 seconds (probing each 0.5s), quitting if connection would not be possible.
   
+Parameters in triangular braces `<>` are required, while these in square ones `[]` are optional.
+
 #### Setting HOTP secret
 To set a new HOTP secret to be verified on the device please run:
 ```bash
-./nitrokey_hotp_verification set <BASE32 HOTP SECRET> <ADMIN PIN>
+./nitrokey_hotp_verification set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]
 ```
 where:
-- `<BASE32 HOTP SECRET>` is a new base32 HOTP secret, with up to 160 bits of length
-- `<ADMIN PIN>` is a current Admin PIN of the Nitrokey Pro device
+- `BASE32 HOTP SECRET` is a new base32 HOTP secret, with up to 160 bits of length;
+- `ADMIN PIN` is a current Admin PIN of the device;
+- `COUNTER` is an optional argument holding an initial value for the HOTP counter to be set on the device.
+
 #### Verifying HOTP code
 To verify the HOTP code please run `check` command as in:
 ```bash
 ./nitrokey_hotp_verification check <HOTP CODE>
 ```
 where:
-`<HOTP CODE>` is a 6-digits HOTP code to verify
+`HOTP CODE` is a 6-digits HOTP code to verify
 
 In case where the code is verified on the device, the green LED will blink 5 times. Otherwise the red LED will blink 5 times, twice as fast than green.
 
@@ -111,7 +115,7 @@ Available commands:
  ./nitrokey_hotp_verification info
  ./nitrokey_hotp_verification version
  ./nitrokey_hotp_verification check <HOTP CODE>
- ./nitrokey_hotp_verification set <BASE32 HOTP SECRET> <ADMIN PIN>
+ ./nitrokey_hotp_verification set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]
 
 ```
 
