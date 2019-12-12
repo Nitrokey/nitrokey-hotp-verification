@@ -40,8 +40,8 @@ void print_help(char* app_name) {
          "\t%s id\n"
          "\t%s info\n"
          "\t%s version\n"
-         "\t%s check <HOTP CODE>\n"
-         "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN>\n",
+         "\t%s check HOTP_CODE\n"
+         "\t%s set BASE32_HOTP_SECRET ADMIN_PIN [COUNTER]\n",
          app_name, app_name, app_name, app_name, app_name);
 }
 
@@ -111,8 +111,14 @@ int parse_cmd_and_run(int argc, char *const *argv) {
         res = check_code_on_device(&dev, argv[2]);
         break;
       case 's':
-        if (argc != 4) break;
-        res = set_secret_on_device(&dev, argv[2], argv[3]);
+        if (argc != 4 && argc !=5 ) break;
+        {
+          uint64_t counter = 0;
+          if (argc==5){
+            counter = strtol10_s(argv[4]);
+          }
+          res = set_secret_on_device(&dev, argv[2], argv[3], counter);
+        }
         break;
       default:
         break;
