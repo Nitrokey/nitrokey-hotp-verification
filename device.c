@@ -31,14 +31,24 @@
 #include "min.h"
 #include "return_codes.h"
 
-#define NITROKEY_PRO_USB_VID 0x20a0
-#define NITROKEY_PRO_USB_PID 0x4108
-#define LIBREM_KEY_USB_VID 0x316d
-#define LIBREM_KEY_USB_PID 0x4c4b
+#define NITROKEY_PRO_USB_VID      0x20a0
+#define NITROKEY_PRO_USB_PID      0x4108
+#define NITROKEY_STORAGE_USB_PID  0x4109
+#define LIBREM_KEY_USB_VID        0x316d
+#define LIBREM_KEY_USB_PID        0x4c4b
+
+
+const VidPid devices[] = {
+      {NITROKEY_PRO_USB_VID, NITROKEY_PRO_USB_PID, "Nitrokey Pro"},
+      {LIBREM_KEY_USB_VID, LIBREM_KEY_USB_PID, "Librem Key"},
+      {NITROKEY_PRO_USB_VID, NITROKEY_STORAGE_USB_PID, "Nitrokey Storage"},
+};
+
+const size_t devices_size = sizeof(devices)/ sizeof(devices[0]);
 
 static const int CONNECTION_ATTEMPTS_COUNT = 80;
 
-static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000*1000/2;
+static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000*1000/3;
 
 int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size) {
   const int receive_attempts = 10;
@@ -104,40 +114,31 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
   return RET_NO_ERROR;
 }
 
-
 int device_connect(struct Device *dev, const char *key_brand) {
   int count = CONNECTION_ATTEMPTS_COUNT;
-  unsigned short m_vid;
-  unsigned short m_pid;
 
   if (dev->mp_devhandle != nullptr)
     return 1;
 
   while (count-- > 0) {
-    m_vid = NITROKEY_PRO_USB_VID;
-    m_pid = NITROKEY_PRO_USB_PID;
-    dev->mp_devhandle = hid_open(m_vid, m_pid, nullptr);
-    if (dev->mp_devhandle != NULL)
-      break;
-
-    m_vid = LIBREM_KEY_USB_VID;
-    m_pid = LIBREM_KEY_USB_PID;
-    dev->mp_devhandle = hid_open(m_vid, m_pid, nullptr);
-    if (dev->mp_devhandle != NULL)
-      break;
-
+    for (size_t dev_id = 0; dev_id < devices_size; ++dev_id) {
+      const VidPid vidPid = devices[dev_id];
+      dev->mp_devhandle = hid_open(vidPid.vid, vidPid.pid, nullptr);
+      if (dev->mp_devhandle != nullptr){
+        dev->dev_info = vidPid;
+        fprintf(stderr, "Connected to %s. \n", dev->dev_info.name);
+        return true;
+      }
+      usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
+    }
     if (count == CONNECTION_ATTEMPTS_COUNT)
       fprintf(stderr, "Trying to connect to %s: ", key_brand);
     else
       fprintf(stderr, ".");
     fflush(stderr);
-    usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
   }
   fprintf(stderr, "\n"); fflush(stderr);
 
-  if (dev->mp_devhandle != nullptr)
-    return true;
-  else
     return false;
 }
 
