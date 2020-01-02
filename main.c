@@ -48,11 +48,14 @@ void print_help(char* app_name) {
 
 int main(int argc, char* argv[]) {
   char *librem_exec = "libremkey";
+  char *nitrokey_exec = "nitrokey";
   char *key_brand;
   if(strstr(argv[0], librem_exec) != NULL) {
     key_brand = "Librem Key";
-  } else {
+  } else if(strstr(argv[0], nitrokey_exec) != NULL) {
     key_brand = "Nitrokey";
+  } else {
+    key_brand = "USB security dongle";
   }
   print_welcome(key_brand);
 

@@ -1,0 +1,44 @@
+#!/bin/sh
+
+usage()
+{
+ echo "This command initializes the HOTP counter of the USB security dongle to the specified value"
+ echo "usage: $0 <admin_pin> <HOTP_secret> <HOTP_counter>"
+}
+
+if [ "$3" == "" ]; then
+  usage
+  exit 1
+fi
+
+PIN=$1
+SECRET=$2
+COUNTER=$3
+SECRET_B32=$(echo -n $SECRET | base32)
+
+hotp_verification set $SECRET_B32 $PIN 
+if [ $? -ne 0 ]; then
+  echo "ERROR: Setting HOTP secret on USB security dongle failed!"
+  exit 1
+fi
+
+i=9
+while [ "$i" -lt "$COUNTER" ]; do
+  echo "Updating counter to $i"
+  HOTP_CODE=$(echo $SECRET | hotp $i)
+  hotp_verification check $HOTP_CODE > /dev/null
+  if [ $? -ne 0 ]; then
+    echo "HOTP check failed for counter=$i, code=$HOTP_CODE"
+    exit 1
+  fi
+  let "i += 10"
+done
+
+HOTP_CODE=$(echo $SECRET | hotp $COUNTER)
+hotp_verification check $HOTP_CODE > /dev/null
+if [ $? -ne 0 ]; then
+  echo "HOTP check failed for counter=$COUNTER, code=$HOTP_CODE"
+  exit 1
+else
+  echo "USB security dongle initialized at counter $COUNTER"
+fi
