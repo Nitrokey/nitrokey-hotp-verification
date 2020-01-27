@@ -126,7 +126,6 @@ int device_connect(struct Device *dev, const char *key_brand) {
       dev->mp_devhandle = hid_open(vidPid.vid, vidPid.pid, nullptr);
       if (dev->mp_devhandle != nullptr){
         dev->dev_info = vidPid;
-        fprintf(stderr, "Connected to %s. \n", dev->dev_info.name);
         return true;
       }
       usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
