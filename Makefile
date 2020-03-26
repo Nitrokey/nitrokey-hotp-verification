@@ -1,12 +1,16 @@
 all:
-	echo nothing
+	echo "Helper Makefile for build reproduction test, done on Fedora 30 and Ubuntu 18.04, with system and bundled hidapi"
+	echo "(4 configurations total). Dependencies are taken from the Heads project."
+	echo "Run 'repro-build' target to build Docker images, and 'repro-run' to run reproduction test."
 
-.PHONY: repro-build repro-run repro-build-fedora
+.PHONY: repro-build repro-run repro-build-fedora repro-build-ubuntu
+
+repro-build: | repro-build-ubuntu repro-build-fedora
 
 repro-build-fedora:
 	sudo docker build -f Dockerfile.fedora . -t nhv-f
 
-repro-build:
+repro-build-ubuntu:
 	sudo docker build -f Dockerfile.ubuntu . -t nhv-u
 
 # BUILDCMD=cmake -DUSE_SYSTEM_HIDAPI=OFF # failing (for tests)
