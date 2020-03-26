@@ -46,9 +46,9 @@ const VidPid devices[] = {
 
 const size_t devices_size = sizeof(devices)/ sizeof(devices[0]);
 
-static const int CONNECTION_ATTEMPTS_COUNT = 80;
+static const int CONNECTION_ATTEMPTS_COUNT = 2;
 
-static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000*1000/3;
+static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000*1000/2;
 
 int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size) {
   const int receive_attempts = 10;
