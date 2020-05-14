@@ -17,12 +17,17 @@ repro-build-ubuntu:
 BUILDCMD=cmake -DCMAKE_C_FLAGS=-fdebug-prefix-map=$(PWD)=heads -gno-record-gcc-switches -DADD_GIT_INFO=OFF -DCMAKE_BUILD_TYPE=Release 
 BUILD1=$(BUILDCMD) -DUSE_SYSTEM_HIDAPI=ON
 BUILD2=$(BUILDCMD) -DUSE_SYSTEM_HIDAPI=OFF
-CMD1=env PYTHONIOENCODING=utf-8 reprotest "cd build && $(BUILD1) .. && make clean && make" build/libremkey_hotp_verification
-CMD2=env PYTHONIOENCODING=utf-8 reprotest "cd build && $(BUILD2) .. && make clean && make" build/libremkey_hotp_verification
+#USERNS=bash -c "echo 1 > /proc/sys/kernel/unprivileged_userns_clone" &&
+REPROTEST=env PYTHONIOENCODING=utf-8 reprotest --min-cpus 2
+CMD1=$(USERNS) $(REPROTEST) "cd build && $(BUILD1) .. && make clean && make" build/libremkey_hotp_verification
+CMD2=$(USERNS) $(REPROTEST) "cd build && $(BUILD2) .. && make clean && make" build/libremkey_hotp_verification
+TEE=| tee -a log.txt
 repro-run:
 	mkdir -p build
-	sudo docker run -it --privileged  -v $(PWD):/app nhv-u $(CMD1)
-	sudo docker run -it --privileged  -v $(PWD):/app nhv-u $(CMD2)
-	sudo docker run -it --privileged  -v $(PWD):/app nhv-f $(CMD1)
-	sudo docker run -it --privileged  -v $(PWD):/app nhv-f $(CMD2)
+	echo > log.txt
+	sudo docker run -it --privileged  -v $(PWD):/app nhv-u $(CMD1) $(TEE)
+	sudo docker run -it --privileged  -v $(PWD):/app nhv-u $(CMD2) $(TEE)
+	sudo docker run -it --privileged  -v $(PWD):/app nhv-f $(CMD1) $(TEE)
+	sudo docker run -it --privileged  -v $(PWD):/app nhv-f $(CMD2) $(TEE)
 	@echo finished with success
+	grep "./build/libremkey_hotp_verification"  log.txt | sort -u
