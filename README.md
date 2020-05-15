@@ -13,7 +13,9 @@ This tool also reads from `/dev/urandom` to generate session secret for device-a
 The Nitrokey device needs to support HOTP verification.
 
 ## Compilation
-This tool uses CMake for compilation. Please run:
+
+### CMake
+This tool uses CMake for compilation as its main driver. Please run:
 
 ```bash
 mkdir build && cd build
@@ -42,6 +44,27 @@ USE_SYSTEM_HIDAPI:BOOL=OFF
 Example compilation flags use:
 ```bash
 cmake .. -DADD_GIT_INFO=OFF -DCMAKE_BUILD_TYPE=Release
+```
+
+### Makefile
+To support reproducible build within Heads, additional build method using Gnu Make was added. To run:
+
+```bash
+make
+```
+
+- At the moment `hidapi` library will always be bundled statically.
+- It is possible to provide `libusb` flags with `LIBUSB_FLAGS` and `LIBUSB_LIB`, otherwise it will be taken from the `pkg-config`.
+- Cross-compilation can be achieved overwriting standard build variables.
+- To disable embedding Git version it suffices to set `GITVERSION` to none.
+- Additional helper command was added to quickly compute SHA256 sum for Heads inclusion, and could be executed with `make github_sha`.
+
+
+### Meson
+Meson was added as a backup method in case, when build reproducibility could not be achieved with Gnu Makefile. It is not configurable. Usage:
+```bash
+meson builddir
+cd builddir && ninja
 ```
 
 ## Usage
@@ -163,6 +186,16 @@ Tests could be run selectively - see `--help` switch to learn more.
 
 #### Size
 In a Release build, with statically linked HIDAPI, application takes 50kB of storage (42kB stripped).
+
+#### Build reproducibility
+Build reproducibility was tested with Repro-test tool. Docker files for Ubuntu and Fedora are provided for tests on both systems. See https://reproducible-builds.org/ for more details.
+Following commands will build Docker environments, execute tool builds and show final SHA256 hashes of the binaries:
+```bash
+make -f Makefile-repro.mk repro-build
+make -f Makefile-repro.mk repro-run
+```
+
+
 
 ## License
 Code is licensed under GPLv3, excluding `base32.{h,c}` files. The latter are downloaded from [tpmtopt](https://github.com/osresearch/tpmtotp) project and seem to be licensed under [MIT](https://choosealicense.com/licenses/mit/) license.
