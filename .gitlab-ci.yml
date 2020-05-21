@@ -1,0 +1,24 @@
+image: fedora:30
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - build
+
+build:
+  stage: build
+  retry: 0
+  script:
+    - dnf install -y make gcc gcc-c++ git libusb-devel cmake hidapi-devel
+    - git fetch origin
+    - git reset --hard origin/$CI_COMMIT_REF_NAME
+    - git submodule update --init --recursive
+    - mkdir -p build
+    - cd build && cmake -DCMAKE_C_FLAGS="-fdebug-prefix-map=$PWD=heads -gno-record-gcc-switches" -DADD_GIT_INFO=OFF -DCMAKE_BUILD_TYPE=Release .. && cd ..
+    - cd build && make && cd ..
+    - sha256sum build/*hotp*
+    - tar zcvf artifacts.tar.gz ./build/*hotp*
+  artifacts:
+    paths:
+      - ./artifacts.tar.gz

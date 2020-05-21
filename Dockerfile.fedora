@@ -1,0 +1,9 @@
+FROM fedora:30
+RUN dnf install -y @development-tools gcc-c++ gcc-gnat zlib-devel perl-Digest-MD5 perl-Digest-SHA uuid-devel pcsc-tools ncurses-devel lbzip2 libuuid-devel lzma elfutils-libelf-devel bc bzip2 bison flex git gnupg iasl m4 nasm patch python wget libusb-devel cmake automake pv bsdiff autoconf libtool expat-devel boost-devel libaio-devel cpio texinfo diceware
+RUN dnf install -y faketime
+RUN pip3 install reprotest
+RUN dnf install -y faketime fuse3-devel fuse-devel
+RUN git clone https://salsa.debian.org/reproducible-builds/disorderfs.git dis && cd dis && make && make install
+RUN dnf install -y which hidapi-devel fuse hostname
+# RUN dnf install -y langpacks-*
+WORKDIR /app
