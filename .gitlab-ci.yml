@@ -10,15 +10,15 @@ build:
   stage: build
   retry: 0
   script:
-    - dnf install -y make gcc gcc-c++ git libusb-devel cmake hidapi-devel
-    - git fetch origin
-    - git reset --hard origin/$CI_COMMIT_REF_NAME
+    - dnf install -y make gcc gcc-c++ git libusb-devel cmake hidapi-devel meson
     - git submodule update --init --recursive
-    - mkdir -p build
-    - cd build && cmake -DCMAKE_C_FLAGS="-fdebug-prefix-map=$PWD=heads -gno-record-gcc-switches" -DADD_GIT_INFO=OFF -DCMAKE_BUILD_TYPE=Release .. && cd ..
-    - cd build && make && cd ..
-    - sha256sum build/*hotp*
-    - tar zcvf artifacts.tar.gz ./build/*hotp*
+    - mkdir -p build-cmake
+    - cd build-cmake && cmake -DCMAKE_C_FLAGS="-fdebug-prefix-map=$PWD=heads -gno-record-gcc-switches" -DADD_GIT_INFO=OFF -DCMAKE_BUILD_TYPE=Release .. && cd ..
+    - cd build-cmake && make && cd ..
+    - meson build-meson && cd build-meson && ninja && cd ..
+    - make
+    - sha256sum build-cmake/*hotp* build-meson/*hotp* *hotp*
+    - tar zcvf artifacts.tar.gz ./*hotp* */*hotp*
   artifacts:
     paths:
       - ./artifacts.tar.gz
