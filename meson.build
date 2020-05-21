@@ -1,5 +1,5 @@
 project('hotp-verification', 'c',
-  version : '1.1.0',
+  version : '1.2.0',
 )
 lusb = dependency('libusb-1.0')
 
