@@ -17,8 +17,9 @@ build:
     - cd build-cmake && make && cd ..
     - meson build-meson && cd build-meson && ninja && cd ..
     - make
-    - sha256sum build-cmake/*hotp* build-meson/*hotp* *hotp*
-    - tar zcvf artifacts.tar.gz ./*hotp* */*hotp*
+    - tar zcvf artifacts.tar.gz ./
+    - find . | grep "hotp.verification" | xargs sha256sum
+
   artifacts:
     paths:
       - ./artifacts.tar.gz
