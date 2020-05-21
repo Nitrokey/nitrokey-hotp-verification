@@ -13,13 +13,13 @@ build:
     - dnf install -y make gcc gcc-c++ git libusb-devel cmake hidapi-devel meson
     - git submodule update --init --recursive
     - mkdir -p build-cmake
-    - cd build-cmake && cmake -DCMAKE_C_FLAGS="-fdebug-prefix-map=$PWD=heads -gno-record-gcc-switches" -DADD_GIT_INFO=OFF -DCMAKE_BUILD_TYPE=Release .. && cd ..
-    - cd build-cmake && make && cd ..
-    - meson build-meson && cd build-meson && ninja && cd ..
+    - cd build-cmake && cmake -DCMAKE_BUILD_TYPE=Release ..
+    - cd build-cmake && make
+    - meson build-meson && cd build-meson && ninja
     - make
-    - tar zcvf artifacts.tar.gz ./
-    - find . | grep "hotp.verification" | xargs sha256sum
+#    - tar zcvf artifacts.tar.gz ./
+#    - find . | grep "hotp.verification" | xargs sha256sum
 
-  artifacts:
-    paths:
-      - ./artifacts.tar.gz
+#  artifacts:
+#    paths:
+#      - ./artifacts.tar.gz
