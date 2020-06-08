@@ -7,6 +7,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-guess-branch-probability -Wdate-time -f
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gno-record-gcc-switches -DNDEBUG")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdebug-prefix-map=${CMAKE_CURRENT_BINARY_DIR}=heads")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS}")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 SET(CMAKE_EXE_LINKER_FLAGS  "-O0")
 
 set(GIT_VERSION_PLACEHOLDER "no-git-version")
