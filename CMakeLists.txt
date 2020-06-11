@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.7)
-project(nitrokey_hotp_verification VERSION 1.0)
+project(nitrokey_hotp_verification VERSION 1.2)
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wall -Wextra")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-guess-branch-probability -Wdate-time -frandom-seed=device.c -O0")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gno-record-gcc-switches -DNDEBUG")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdebug-prefix-map=${CMAKE_CURRENT_BINARY_DIR}=heads")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS}")
+SET(CMAKE_EXE_LINKER_FLAGS  "-O0")
 
 set(GIT_VERSION_PLACEHOLDER "no-git-version")
 

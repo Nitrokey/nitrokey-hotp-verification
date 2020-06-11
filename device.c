@@ -46,9 +46,9 @@ const VidPid devices[] = {
 
 const size_t devices_size = sizeof(devices)/ sizeof(devices[0]);
 
-static const int CONNECTION_ATTEMPTS_COUNT = 80;
+static const int CONNECTION_ATTEMPTS_COUNT = 2;
 
-static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000*1000/3;
+static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000*1000/2;
 
 int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size) {
   const int receive_attempts = 10;
@@ -69,7 +69,7 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
     }
   }
   if (i >= receive_attempts-1){
-    printf("WARN %s:%d: could not receive the data from the device.\n", __FILE__, __LINE__);
+    printf("WARN %s:%d: could not receive the data from the device.\n", "device.c", __LINE__);
     return RET_CONNECTION_LOST;
   }
 
@@ -77,7 +77,7 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
     assert(out_buffer_size != 0);
     memcpy(out_data, dev->packet_query.as_data+1, min(out_buffer_size, HID_REPORT_SIZE_CONST-1));
     if (out_buffer_size > HID_REPORT_SIZE_CONST-1){
-      printf("WARN %s:%d: incoming data bigger than provided output buffer.\n", __FILE__, __LINE__);
+      printf("WARN %s:%d: incoming data bigger than provided output buffer.\n", "device.c", __LINE__);
     }
   } else {
     //exit on wrong function parameters
@@ -96,7 +96,7 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
     assert(data_size != 0);
     memcpy(dev->packet_query.payload, in_data, min(data_size, sizeof(dev->packet_query.payload)));
     if (data_size > HID_REPORT_SIZE_CONST-1){
-      printf("WARN %s:%d: input data bigger than buffer.\n", __FILE__, __LINE__);
+      printf("WARN %s:%d: input data bigger than buffer.\n", "device.c", __LINE__);
     }
   } else {
     //exit on wrong function parameters
@@ -107,7 +107,7 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
   int send_status = hid_send_feature_report(dev->mp_devhandle, dev->packet_query.as_data, HID_REPORT_SIZE_CONST);
 
   if (send_status != (int)HID_REPORT_SIZE_CONST){
-    printf("WARN %s:%d: could not send the data to the device.\n", __FILE__, __LINE__);
+    printf("WARN %s:%d: could not send the data to the device.\n", "device.c", __LINE__);
     return RET_CONNECTION_LOST;
   }
 
@@ -126,7 +126,6 @@ int device_connect(struct Device *dev, const char *key_brand) {
       dev->mp_devhandle = hid_open(vidPid.vid, vidPid.pid, nullptr);
       if (dev->mp_devhandle != nullptr){
         dev->dev_info = vidPid;
-        fprintf(stderr, "Connected to %s. \n", dev->dev_info.name);
         return true;
       }
       usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);

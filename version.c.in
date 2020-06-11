@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Nitrokey UG
+ * Copyright (c) 2020 Nitrokey UG
  *
  * This file is part of Nitrokey HOTP verification project.
  *
@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: GPL-3.0
  */
 
-const char* VERSION = "1.1";
+const char* VERSION = "1.2";
 const char* VERSION_GIT = "@GIT_VERSION_PLACEHOLDER@";
 
 
