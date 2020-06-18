@@ -1,0 +1,9 @@
+.idea
+cmake-build-debug/
+builddir/
+*.o
+*.tar.gz
+version.c
+*hotp_verification
+repro
+
