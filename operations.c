@@ -210,26 +210,15 @@ int regenerate_AES_key_Pro(struct Device *dev, char *const admin_password){
   return RET_NO_ERROR;
 }
 
-int regenerate_AES_key(struct Device *dev, char *const admin_password) {
+int regenerate_AES_key_Storage(struct Device *dev, char *const admin_password) {
   int res;
 
-  switch (dev->dev_info.name_short) {
-  case 'S': {
-    //  Nitrokey Storage
-    struct cmd_createNewKeys_Storage data = {};
-    data.kind = 'A';
-    memmove(data.admin_password, admin_password,
-            strnlen(admin_password, sizeof(data.admin_password)));
-    res = device_send(dev, (uint8_t *)&data, sizeof(data), GENERATE_NEW_KEYS);
-  } break;
-  case 'L':
-  case 'P': {
-    return regenerate_AES_key_Pro(dev, admin_password);
-  } break;
-  default:
-    res = RET_UNKNOWN_DEVICE;
-    break;
-  }
+  //  Nitrokey Storage
+  struct cmd_createNewKeys_Storage data = {};
+  data.kind = 'A';
+  memmove(data.admin_password, admin_password,
+          strnlen(admin_password, sizeof(data.admin_password)));
+  res = device_send(dev, (uint8_t *)&data, sizeof(data), GENERATE_NEW_KEYS);
 
   if (res != RET_NO_ERROR)
     return res;
@@ -240,7 +229,7 @@ int regenerate_AES_key(struct Device *dev, char *const admin_password) {
     return res;
   }
   uint8_t status = dev->packet_response.response_st.storage_status.device_status;
-  while (status == 2) {
+  while (status == NK_STORAGE_BUSY) {
     usleep(100 * 1000);
     fprintf(stderr, "."); fflush(stderr);
     res = device_receive_buf(dev);
@@ -253,4 +242,19 @@ int regenerate_AES_key(struct Device *dev, char *const admin_password) {
     return RET_COMM_ERROR;
   }
   return RET_NO_ERROR;
+}
+
+int regenerate_AES_key(struct Device *dev, char *const admin_password) {
+  switch (dev->dev_info.name_short) {
+  case 'S': {
+    return regenerate_AES_key_Storage(dev, admin_password);
+  } break;
+  case 'L':
+  case 'P': {
+    return regenerate_AES_key_Pro(dev, admin_password);
+  } break;
+  default:
+    return RET_UNKNOWN_DEVICE;
+    break;
+  }
 }

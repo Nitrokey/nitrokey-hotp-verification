@@ -159,7 +159,7 @@ int device_connect(struct Device *dev, const char *key_brand) {
 }
 
 int device_disconnect(struct Device *dev) {
-  if (dev->mp_devhandle == nullptr) return 1;
+  if (dev->mp_devhandle == nullptr) return 1; //TODO name error value
   hid_close(dev->mp_devhandle);
   dev->mp_devhandle = nullptr;
   _device_clear_buffers(dev);

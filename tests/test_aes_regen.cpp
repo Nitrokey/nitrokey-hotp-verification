@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Nitrokey UG
+ * Copyright (c) 2020 Nitrokey Gmbh
  *
  * This file is part of Nitrokey HOTP verification project.
  *
@@ -19,27 +19,23 @@
  * SPDX-License-Identifier: GPL-3.0
  */
 
-#ifndef NITROKEY_HOTP_VERIFICATION_OPERATIONS_H
-#define NITROKEY_HOTP_VERIFICATION_OPERATIONS_H
+#include "catch.hpp"
+
+extern "C" {
+#include "../operations.h"
+}
 
 
-static const int MAX_STRING_LENGTH = 50;
-
-static const int HOTP_MAX_INT = 10000*10000;
-
-static const int HOTP_MIN_INT = 0;
-
-static const int NK_STORAGE_BUSY = 2;
-#include "device.h"
-#include "return_codes.h"
-
-int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, const char *admin_PIN, const uint64_t hotp_counter);
-int check_code_on_device(struct Device *dev, const char *HOTP_code_to_verify);
-bool verify_base32(const char* string, size_t len);
-
-long strtol10_s(const char *string);
-
-int regenerate_AES_key(struct Device *dev, char *const admin_password);
+struct Device dev;
+const char * key_brand = "Test device";
 
 
-#endif //NITROKEY_HOTP_VERIFICATION_OPERATIONS_H
+TEST_CASE("Test correct codes", "[HOTP]") {
+  int res;
+  res = device_connect(&dev, key_brand);
+  REQUIRE(res == true);
+  res = regenerate_AES_key(&dev, "12345678");
+  REQUIRE(res == RET_NO_ERROR);
+  device_disconnect(&dev);
+  REQUIRE(res == RET_NO_ERROR);
+}
