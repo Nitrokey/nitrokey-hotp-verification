@@ -117,6 +117,14 @@ To show only the card's serial please run:
 ```bash
 $ ./nitrokey_hotp_verification id
 ```
+
+#### AES key regeneration
+Tool supports AES key regeneration call, which should be called after each GnuPG factory-reset operation. Example call:
+
+```bash
+./nitrokey_hotp_verification regenerate 12345678
+```
+
 #### Complete example
 ```bash
 # set 160-bit secret with RFC's test secret "12345678901234567890"
@@ -138,6 +146,7 @@ Available commands:
  ./nitrokey_hotp_verification info
  ./nitrokey_hotp_verification version
  ./nitrokey_hotp_verification check <HOTP CODE>
+ ./nitrokey_hotp_verification regenerate <ADMIN PIN>
  ./nitrokey_hotp_verification set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]
 
 ```
