@@ -34,7 +34,7 @@ while [ "$i" -lt "$COUNTER" ]; do
   let "i += 10"
 done
 
-HOTP_CODE=$(hotp $i < $SECRET)
+HOTP_CODE=$(hotp $COUNTER < $SECRET)
 libremkey_hotp_verification check $HOTP_CODE > /dev/null
 if [ $? -ne 0 ]; then
   echo "HOTP check failed for counter=$COUNTER, code=$HOTP_CODE"
