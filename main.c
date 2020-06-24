@@ -41,8 +41,9 @@ void print_help(char* app_name) {
          "\t%s info\n"
          "\t%s version\n"
          "\t%s check <HOTP CODE>\n"
+         "\t%s regenerate\n"
          "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]\n",
-         app_name, app_name, app_name, app_name, app_name);
+         app_name, app_name, app_name, app_name, app_name, app_name);
 }
 
 
@@ -119,6 +120,10 @@ int parse_cmd_and_run(int argc, char *const *argv) {
           }
           res = set_secret_on_device(&dev, argv[2], argv[3], counter);
         }
+        break;
+      case 'r':
+        if (argc != 3) break;
+        res = regenerate_AES_key(&dev, argv[2]);
         break;
       default:
         break;

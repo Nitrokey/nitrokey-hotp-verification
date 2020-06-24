@@ -191,6 +191,14 @@ typedef struct {
   uint32_t otp_code_to_verify;
 } __packed cmd_query_verify_code;
 
-#pragma pack (pop)
-#endif //NITROKEY_HOTP_VERIFICATION_STRUCTS_H
+struct cmd_createNewKeys_Pro {
+  uint8_t admin_password[20];
+} __packed;
 
+struct cmd_createNewKeys_Storage {
+  uint8_t kind; // should be set to 'P'
+  uint8_t admin_password[30];
+} __packed;
+
+#pragma pack(pop)
+#endif // NITROKEY_HOTP_VERIFICATION_STRUCTS_H
