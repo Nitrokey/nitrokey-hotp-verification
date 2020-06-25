@@ -25,7 +25,7 @@ fi
 
 hotp_verification set $SECRET_B32 "$PIN"
 if [ $? -ne 0 ]; then
-  echo "ERROR: Setting HOTP secret on $(BRANDING) failed!"
+  echo "ERROR: Setting HOTP secret on $BRANDING failed!"
   exit 1
 fi
 
@@ -47,5 +47,5 @@ if [ $? -ne 0 ]; then
   echo "HOTP check failed for counter=$COUNTER, code=$HOTP_CODE"
   exit 1
 else
-  echo "$(BRANDING) initialized at counter $COUNTER"
+  echo "$BRANDING initialized at counter $COUNTER"
 fi
