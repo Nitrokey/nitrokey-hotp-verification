@@ -45,19 +45,15 @@ LIBUSB_LIB=$(shell $(PKGCONFIG) --libs libusb-1.0)
 CFLAGS= -Wall -Wextra -fno-guess-branch-probability -Wdate-time -frandom-seed=42 -O2 -gno-record-gcc-switches -DNDEBUG -fdebug-prefix-map=${PWD}=heads -c -std=gnu11 -DNK_REMOVE_PTHREAD $(LIBUSB_FLAGS)
 
 OUTDIR=
-OUT=nitrokey_hotp_verification
-OUT2=libremkey_hotp_verification
+OUT=hotp_verification
 LDFLAGS=$(LIBUSB_LIB)
 
-all: $(OUT) $(OUT2)
+all: $(OUT)
 	ls -lh $^
 	sha256sum $^
 
 clean:
 	-rm $(OBJS) $(OUT) version.c
-
-$(OUT2): $(OUT)
-	cp $< $@
 
 $(OUT): $(OBJS)
 	$(CC) $^ $(LDFLAGS)  -o $@
@@ -74,7 +70,7 @@ $(SRCDIR)/version.c: $(SRCDIR)/version.c.in
 INSTALL=/usr/local/
 .PHONY: install
 install:
-	cp -v $(OUT) $(OUT2) $(INSTALL)/bin
+	cp -v $(OUT) $(INSTALL)/bin
 
 .PHONY: github_sha
 GVER=$(shell git rev-parse HEAD)

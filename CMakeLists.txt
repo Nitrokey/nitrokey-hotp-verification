@@ -31,8 +31,6 @@ set(SOURCE_FILES structs.h crc32.c crc32.h device.c device.h operations.c operat
 
 add_library(nitrokey_hotp_verification_core STATIC ${SOURCE_FILES})
 
-add_executable(nitrokey_hotp_verification main.c)
-add_executable(libremkey_hotp_verification main.c)
 add_executable(hotp_verification main.c)
 
 
@@ -40,11 +38,7 @@ OPTION(USE_SYSTEM_HIDAPI "Link application against system HIDAPI library" FALSE)
 IF(USE_SYSTEM_HIDAPI)
     find_package(PkgConfig)
     pkg_search_module(HIDAPI_LIBUSB REQUIRED hidapi-libusb)
-    target_compile_options(nitrokey_hotp_verification PRIVATE ${HIDAPI_LIBUSB_CFLAGS})
-    target_compile_options(libremkey_hotp_verification PRIVATE ${HIDAPI_LIBUSB_CFLAGS})
     target_compile_options(hotp_verification PRIVATE ${HIDAPI_LIBUSB_CFLAGS})
-    target_link_libraries(nitrokey_hotp_verification nitrokey_hotp_verification_core ${HIDAPI_LIBUSB_LDFLAGS})
-    target_link_libraries(libremkey_hotp_verification nitrokey_hotp_verification_core ${HIDAPI_LIBUSB_LDFLAGS})
     target_link_libraries(hotp_verification nitrokey_hotp_verification_core ${HIDAPI_LIBUSB_LDFLAGS})
 ELSE()
     include_directories(hidapi/hidapi)
@@ -52,8 +46,6 @@ ELSE()
     add_library(hidapi-libusb STATIC hidapi/libusb/hid.c)
     target_link_libraries(hidapi-libusb usb-1.0)
     target_compile_definitions(hidapi-libusb PRIVATE NK_REMOVE_PTHREAD)
-    target_link_libraries(nitrokey_hotp_verification nitrokey_hotp_verification_core hidapi-libusb)
-    target_link_libraries(libremkey_hotp_verification nitrokey_hotp_verification_core hidapi-libusb)
     target_link_libraries(hotp_verification nitrokey_hotp_verification_core hidapi-libusb)
 ENDIF()
 

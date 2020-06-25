@@ -52,7 +52,5 @@ include_directories('.'),
 include_directories('hidapi/hidapi'),
 ])
 
-name1 = 'nitrokey-hotp-verification'
-name2 = 'libremkey-hotp-verification'
-executable(name1, src, dependencies : lusb, include_directories: incdir, c_args: common_flags)
-executable(name2, src, dependencies : lusb, include_directories: incdir, c_args: common_flags)
+name = 'hotp-verification'
+executable(name, src, dependencies : lusb, include_directories: incdir, c_args: common_flags)
