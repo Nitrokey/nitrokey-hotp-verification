@@ -19,20 +19,20 @@
  * SPDX-License-Identifier: GPL-3.0
  */
 
+#include "operations.h"
+#include "base32.h"
+#include "command_id.h"
+#include "dev_commands.h"
+#include "device.h"
+#include "min.h"
+#include "random_data.h"
+#include "settings.h"
+#include "structs.h"
 #include <assert.h>
-#include <string.h>
-#include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "operations.h"
-#include "device.h"
-#include "base32.h"
-#include "structs.h"
-#include "command_id.h"
-#include "random_data.h"
-#include "dev_commands.h"
-#include "min.h"
-#include "settings.h"
+#include <string.h>
+#include <sys/param.h>
 
 static const int HOTP_SLOT_NUMBER = 3;
 
@@ -162,6 +162,99 @@ int check_code_on_device(struct Device *dev, const char *HOTP_code_to_verify) {
     printf("\nCounters differs by %d\n", HOTP_counters_difference);
   }
 #endif
-  
+
   return dev->packet_response.response_st.payload[0] ? RET_VALIDATION_PASSED : RET_VALIDATION_FAILED;
+}
+
+int regenerate_AES_key_Pro(struct Device *dev, char *const admin_password){
+  if (dev->dev_info.name_short != 'P' && dev->dev_info.name_short != 'L') {
+    return RET_UNKNOWN_DEVICE;
+  }
+
+  int res;
+    //  Nitrokey Pro / Librem Key
+    struct cmd_createNewKeys_Pro data_pro = {}  ;
+    memmove(data_pro.admin_password, admin_password,
+            strnlen(admin_password, sizeof(data_pro.admin_password)));
+    res = device_send(dev, (uint8_t *)&data_pro, sizeof(data_pro), NEW_AES_KEY);
+
+  if (res != RET_NO_ERROR)
+    return res;
+  res = device_receive_buf(dev);
+  if (res != RET_NO_ERROR)
+    return res;
+  if ((res = dev->packet_response.response_st.last_command_status) != 0) {
+    return res;
+  }
+  uint8_t status = dev->packet_response.response_st.device_status;
+  usleep(1 * 1000 * 1000);
+  uint16_t errors_cnt = 20;
+  while (status == 1) {
+    usleep(1 * 1000 * 1000);
+    fprintf(stderr, "."); fflush(stderr);
+    res = device_receive_buf(dev);
+    if (res != RET_NO_ERROR) {
+      errors_cnt--;
+      printf("error: %d\n", errors_cnt);
+    }
+    if (errors_cnt==0){
+      return res;
+    }
+    status = dev->packet_response.response_st.device_status;
+  }
+  res = status;
+  if (res != 0) {
+    return RET_COMM_ERROR;
+  }
+  printf("Please reconnect your device\n");
+  return RET_NO_ERROR;
+}
+
+int regenerate_AES_key_Storage(struct Device *dev, char *const admin_password) {
+  int res;
+
+  //  Nitrokey Storage
+  struct cmd_createNewKeys_Storage data = {};
+  data.kind = 'A';
+  memmove(data.admin_password, admin_password,
+          strnlen(admin_password, sizeof(data.admin_password)));
+  res = device_send(dev, (uint8_t *)&data, sizeof(data), GENERATE_NEW_KEYS);
+
+  if (res != RET_NO_ERROR)
+    return res;
+  res = device_receive_buf(dev);
+  if (res != RET_NO_ERROR)
+    return res;
+  if ((res = dev->packet_response.response_st.last_command_status) != 0) {
+    return res;
+  }
+  uint8_t status = dev->packet_response.response_st.storage_status.device_status;
+  while (status == NK_STORAGE_BUSY) {
+    usleep(100 * 1000);
+    fprintf(stderr, "."); fflush(stderr);
+    res = device_receive_buf(dev);
+    if (res != RET_NO_ERROR)
+      return res;
+    status = dev->packet_response.response_st.storage_status.device_status;
+  }
+  res = status;
+  if (!(res == 0 || res == 1)) {
+    return RET_COMM_ERROR;
+  }
+  return RET_NO_ERROR;
+}
+
+int regenerate_AES_key(struct Device *dev, char *const admin_password) {
+  switch (dev->dev_info.name_short) {
+  case 'S': {
+    return regenerate_AES_key_Storage(dev, admin_password);
+  } break;
+  case 'L':
+  case 'P': {
+    return regenerate_AES_key_Pro(dev, admin_password);
+  } break;
+  default:
+    return RET_UNKNOWN_DEVICE;
+    break;
+  }
 }

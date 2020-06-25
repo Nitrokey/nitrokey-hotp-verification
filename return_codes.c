@@ -33,6 +33,8 @@ const char* res_to_error_string(int res) {
   if (res == RET_BADLY_FORMATTED_HOTP_CODE) return "Invalid HOTP code given";
   if (res == RET_TOO_LONG_PIN) return "Too long PIN given";
   if (res == RET_CONNECTION_LOST) return "Connection to the device was lost during the process";
+  if (res == RET_COMM_ERROR) return "Connection error occurred";
+  if (res == RET_UNKNOWN_DEVICE) return "Current device is not supported or known";
   return "Unknown error";
 }
 

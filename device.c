@@ -37,11 +37,26 @@
 #define LIBREM_KEY_USB_VID        0x316d
 #define LIBREM_KEY_USB_PID        0x4c4b
 
+void _dump(uint8_t * data, size_t datalen){
+  if (datalen == 0) {
+    printf("empty\n");
+    return;
+  }
+  for (size_t i = 0; i < datalen; ++i) {
+    printf("%02x ", data[i]);
+  }
+  printf("\n");
+}
+#ifdef _DEBUG
+#define dump(x, len) printf("Dump of %s[%d]: ", #x, len); _dump(x, len);
+#else
+#define dump(x, len) ;
+#endif
 
 const VidPid devices[] = {
-      {NITROKEY_PRO_USB_VID, NITROKEY_PRO_USB_PID, "Nitrokey Pro"},
-      {LIBREM_KEY_USB_VID, LIBREM_KEY_USB_PID, "Librem Key"},
-      {NITROKEY_PRO_USB_VID, NITROKEY_STORAGE_USB_PID, "Nitrokey Storage"},
+      {NITROKEY_PRO_USB_VID, NITROKEY_PRO_USB_PID, "Nitrokey Pro", 'P'},
+      {LIBREM_KEY_USB_VID, LIBREM_KEY_USB_PID, "Librem Key", 'L'},
+      {NITROKEY_PRO_USB_VID, NITROKEY_STORAGE_USB_PID, "Nitrokey Storage", 'S'},
 };
 
 const size_t devices_size = sizeof(devices)/ sizeof(devices[0]);
@@ -58,10 +73,11 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
 #ifdef _DEBUG
     fprintf(stderr, "."); fflush(stderr);
 #endif
-    usleep(100*1000);
+    usleep(500*1000);
 
     receive_status = (hid_get_feature_report(dev->mp_devhandle, dev->packet_response.as_data, HID_REPORT_SIZE_CONST));
     if (receive_status != (int)HID_REPORT_SIZE_CONST) continue;
+    dump(dev->packet_response.as_data, receive_status);
     bool valid_response_crc = stm_crc32(dev->packet_response.as_data+1, HID_REPORT_SIZE_CONST - 5) == dev->packet_response.response_st.crc;
     bool valid_query_crc = dev->packet_query.crc == dev->packet_response.response_st.last_command_crc;
     if (valid_response_crc && valid_query_crc && dev->packet_response.response_st.device_status == 0){
@@ -104,6 +120,7 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
   }
 
   dev->packet_query.crc = stm_crc32(dev->packet_query.as_data+1, HID_REPORT_SIZE_CONST - 5);
+  dump(dev->packet_query.as_data, HID_REPORT_SIZE_CONST);
   int send_status = hid_send_feature_report(dev->mp_devhandle, dev->packet_query.as_data, HID_REPORT_SIZE_CONST);
 
   if (send_status != (int)HID_REPORT_SIZE_CONST){
@@ -142,7 +159,7 @@ int device_connect(struct Device *dev) {
 }
 
 int device_disconnect(struct Device *dev) {
-  if (dev->mp_devhandle == nullptr) return 1;
+  if (dev->mp_devhandle == nullptr) return 1; //TODO name error value
   hid_close(dev->mp_devhandle);
   dev->mp_devhandle = nullptr;
   _device_clear_buffers(dev);

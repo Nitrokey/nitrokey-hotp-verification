@@ -33,6 +33,7 @@ typedef struct VidPid {
   uint16_t vid;
   uint16_t pid;
   const char* name;
+  char name_short;
 } VidPid;
 
 struct Device {
