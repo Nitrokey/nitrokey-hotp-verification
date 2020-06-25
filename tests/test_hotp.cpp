@@ -43,12 +43,11 @@ const char* RFC_HOTP_codes[] = {
 };
 
 struct Device dev;
-const char * key_brand = "Test device";
 
 
 TEST_CASE("Test correct codes", "[HOTP]") {
   int res;
-  res = device_connect(&dev, key_brand);
+  res = device_connect(&dev);
   REQUIRE(res == true);
   res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
@@ -62,7 +61,7 @@ TEST_CASE("Test correct codes", "[HOTP]") {
 
 TEST_CASE("Test correct codes set with initial counter value", "[HOTP]") {
   int res;
-  res = device_connect(&dev, key_brand);
+  res = device_connect(&dev);
   REQUIRE(res == true);
   int code = 0;
   for (auto c: RFC_HOTP_codes){
@@ -76,7 +75,7 @@ TEST_CASE("Test correct codes set with initial counter value", "[HOTP]") {
 
 TEST_CASE("Test incorrect codes", "[HOTP]") {
   int res;
-  res = device_connect(&dev, key_brand);
+  res = device_connect(&dev);
   REQUIRE(res == true);
   res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
@@ -92,7 +91,7 @@ TEST_CASE("Test incorrect codes", "[HOTP]") {
 
 TEST_CASE("Test codes with offset 2", "[HOTP]") {
   int res;
-  res = device_connect(&dev, key_brand);
+  res = device_connect(&dev);
   REQUIRE(res == true);
   res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
@@ -109,7 +108,7 @@ TEST_CASE("Test codes with offset 2", "[HOTP]") {
 
 TEST_CASE("Test code with maximum offsets", "[HOTP]") {
   int res;
-  res = device_connect(&dev, key_brand);
+  res = device_connect(&dev);
   REQUIRE(res == true);
   res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
@@ -135,7 +134,7 @@ TEST_CASE("Test code with maximum offsets", "[HOTP]") {
 
 TEST_CASE("Try to set the HOTP secret with wrong PIN and test PIN counters", "[HOTP]") {
   int res;
-  res = device_connect(&dev, key_brand);
+  res = device_connect(&dev);
   REQUIRE(res == true);
 
   struct ResponseStatus status = device_get_status(&dev);
