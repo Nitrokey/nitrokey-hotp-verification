@@ -131,7 +131,7 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
   return RET_NO_ERROR;
 }
 
-int device_connect(struct Device *dev, const char *key_brand) {
+int device_connect(struct Device *dev) {
   int count = CONNECTION_ATTEMPTS_COUNT;
 
   if (dev->mp_devhandle != nullptr)
@@ -148,7 +148,7 @@ int device_connect(struct Device *dev, const char *key_brand) {
       usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
     }
     if (count == CONNECTION_ATTEMPTS_COUNT)
-      fprintf(stderr, "Trying to connect to %s: ", key_brand);
+      fprintf(stderr, "Trying to connect to device: ");
     else
       fprintf(stderr, ".");
     fflush(stderr);

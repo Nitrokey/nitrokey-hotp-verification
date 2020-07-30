@@ -27,12 +27,11 @@ extern "C" {
 
 
 struct Device dev;
-const char * key_brand = "Test device";
 
 
 TEST_CASE("Test correct codes", "[HOTP]") {
   int res;
-  res = device_connect(&dev, key_brand);
+  res = device_connect(&dev);
   REQUIRE(res == true);
   res = regenerate_AES_key(&dev, "12345678");
   REQUIRE(res == RET_NO_ERROR);

@@ -31,10 +31,6 @@ struct Device dev;
 
 int parse_cmd_and_run(int argc, char *const *argv);
 
-void print_welcome(char* key_brand){
-  printf("HOTP code verification application via %s, version %s\n", key_brand, VERSION);
-}
-
 void print_help(char* app_name) {
   printf("Available commands: \n"
          "\t%s id\n"
@@ -48,21 +44,14 @@ void print_help(char* app_name) {
 
 
 int main(int argc, char* argv[]) {
-  char *librem_exec = "libremkey";
-  char *key_brand;
-  if(strstr(argv[0], librem_exec) != NULL) {
-    key_brand = "Librem Key";
-  } else {
-    key_brand = "Nitrokey";
-  }
-  print_welcome(key_brand);
+  printf("HOTP code verification application, version %s\n", VERSION);
 
   int res;
 
   if(argc != 1){
-    res = device_connect(&dev, key_brand);
+    res = device_connect(&dev);
     if (res != true){
-      printf("Could not connect with the %s device\n", key_brand);
+      printf("Could not connect with the device\n");
       return EXIT_CONNECTION_ERROR;
     }
   }
