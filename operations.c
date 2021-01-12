@@ -52,7 +52,7 @@ bool verify_base32(const char* string, size_t len){
 int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, const char *admin_PIN, const uint64_t hotp_counter) {
   int res;
   //Make sure secret is parsable
-#define secret_size_bytes (20)
+#define secret_size_bytes (40)
   const size_t base32_string_length_limit = BASE32_LEN(secret_size_bytes);
   const size_t OTP_secret_base32_length = strnlen(OTP_secret_base32, base32_string_length_limit);
   if (!(OTP_secret_base32 != nullptr && OTP_secret_base32_length > 0
@@ -63,7 +63,7 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
   }
 
   //Decode base32 to binary
-  uint8_t binary_secret_buf[secret_size_bytes] = {0}; //handling 20 bytes -> 160 bits
+  uint8_t binary_secret_buf[secret_size_bytes] = {0}; //handling 40 bytes -> 320 bits
   const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf);
   assert(decoded_length <= secret_size_bytes);
 
