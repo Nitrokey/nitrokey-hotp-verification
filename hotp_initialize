@@ -17,7 +17,7 @@ COUNTER=$3
 SECRET_B32=$(cat $SECRET | base32)
 
 # You can add a branding as forth argument (used in Heads)
-if [ -n $4 ]; then
+if [ -n "$4" ]; then
   BRANDING="$4"
 else
   BRANDING="HOTP USB Security Dongle"
