@@ -1,0 +1,10 @@
+#ifndef NITROKEY_HOTP_VERIFICATION_UTILS_H
+#define NITROKEY_HOTP_VERIFICATION_UTILS_H
+
+
+#define STRINGIFY_HELPER(X) #X
+#define STRINGIFY(X) STRINGIFY_HELPER(X)
+#define check_r(x) if((x) != 0){ printf("failed " STRINGIFY(x) "\n"); exit(1); }
+
+
+#endif //NITROKEY_HOTP_VERIFICATION_UTILS_H

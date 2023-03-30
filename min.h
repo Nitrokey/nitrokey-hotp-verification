@@ -14,13 +14,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Nitrokey App. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nitrokey HOTP verification. If not, see <http://www.gnu.org/licenses/>.
  *
  * SPDX-License-Identifier: GPL-3.0
  */
 
 #ifndef NITROKEY_HOTP_VERIFICATION_MIN_H
 #define NITROKEY_HOTP_VERIFICATION_MIN_H
+
+#include <stddef.h>
 
 size_t min(size_t a, size_t b);
 //int min_i(int a, int b);

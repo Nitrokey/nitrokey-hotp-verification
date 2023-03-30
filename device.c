@@ -24,16 +24,19 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include "device.h"
 #include "crc32.h"
 #include "structs.h"
 #include "command_id.h"
 #include "min.h"
 #include "return_codes.h"
+#include "ccid.h"
 
-#define NITROKEY_PRO_USB_VID      0x20a0
+#define NITROKEY_USB_VID      0x20a0
 #define NITROKEY_PRO_USB_PID      0x4108
 #define NITROKEY_STORAGE_USB_PID  0x4109
+#define NITROKEY_3_USB_PID      0x42b2
 #define LIBREM_KEY_USB_VID        0x316d
 #define LIBREM_KEY_USB_PID        0x4c4b
 
@@ -48,15 +51,19 @@ void _dump(uint8_t * data, size_t datalen){
   printf("\n");
 }
 #ifdef _DEBUG
-#define dump(x, len) printf("Dump of %s[%d]: ", #x, len); _dump(x, len);
+#define dump(x, len) printf("Dump of %s[%d]: ", #x, (int) len); _dump(x, len);
 #else
 #define dump(x, len) ;
 #endif
 
 const VidPid devices[] = {
-      {NITROKEY_PRO_USB_VID, NITROKEY_PRO_USB_PID, "Nitrokey Pro", 'P'},
-      {LIBREM_KEY_USB_VID, LIBREM_KEY_USB_PID, "Librem Key", 'L'},
-      {NITROKEY_PRO_USB_VID, NITROKEY_STORAGE_USB_PID, "Nitrokey Storage", 'S'},
+      {NITROKEY_USB_VID,   NITROKEY_PRO_USB_PID,     "Nitrokey Pro",     'P'},
+      {LIBREM_KEY_USB_VID, LIBREM_KEY_USB_PID,       "Librem Key",       'L'},
+      {NITROKEY_USB_VID,   NITROKEY_STORAGE_USB_PID, "Nitrokey Storage", 'S'},
+};
+
+const VidPid devices_ccid[] = {
+      {NITROKEY_USB_VID, NITROKEY_3_USB_PID, "Nitrokey 3", '3'},
 };
 
 const size_t devices_size = sizeof(devices)/ sizeof(devices[0]);
@@ -131,7 +138,39 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
   return RET_NO_ERROR;
 }
 
+int device_connect_hid(struct Device *dev);
+
+int device_connect_ccid(struct Device *dev) {
+    dev->ctx_ccid = NULL;
+    int r = libusb_init(&dev->ctx_ccid);
+    if (r < 0) {
+        printf("Error initializing libusb: %s\n", libusb_strerror(r));
+        return 1;
+    }
+    dev->mp_devhandle_ccid = get_device(dev->ctx_ccid);
+    if (dev->mp_devhandle_ccid == NULL){
+        return 1;
+    }
+
+    return 0;
+}
 int device_connect(struct Device *dev) {
+    int r = device_connect_hid(dev);
+    if (r) {
+        dev->connection_type = CONNECTION_HID;
+        return r;
+    }
+
+    r = device_connect_ccid(dev);
+    if (r) {
+        dev->connection_type = CONNECTION_CCID;
+        return r;
+    }
+
+    return false;
+}
+
+int device_connect_hid(struct Device *dev) {
   int count = CONNECTION_ATTEMPTS_COUNT;
 
   if (dev->mp_devhandle != nullptr)
@@ -184,6 +223,11 @@ int device_receive_buf(struct Device *dev) {
 }
 
 struct ResponseStatus device_get_status(struct Device *dev){
+    if (dev->connection_type == CONNECTION_CCID){
+        printf("Not implemented\n");
+        exit(1);
+    }
+
   //getting smartcards counters takes additional 100ms
   //could be skipped initially and shown only on failed attempt to make that faster
   device_send_buf(dev, GET_PASSWORD_RETRY_COUNT);

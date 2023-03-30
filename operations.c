@@ -28,15 +28,17 @@
 #include "random_data.h"
 #include "settings.h"
 #include "structs.h"
+#include "operations_ccid.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
+#include <unistd.h>
 
 static const int HOTP_SLOT_NUMBER = 3;
 
-static char *const HOTP_SLOT_NAME = "Validation";
+static char *const HOTP_SLOT_NAME = slot_name;
 
 uint8_t get_internal_slot_number_for_hotp(uint8_t slot_number) { return (uint8_t) (0x10 + slot_number); }
 
@@ -52,7 +54,6 @@ bool verify_base32(const char* string, size_t len){
 int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, const char *admin_PIN, const uint64_t hotp_counter) {
   int res;
   //Make sure secret is parsable
-#define secret_size_bytes (40)
   const size_t base32_string_length_limit = BASE32_LEN(secret_size_bytes);
   const size_t OTP_secret_base32_length = strnlen(OTP_secret_base32, base32_string_length_limit);
   if (!(OTP_secret_base32 != nullptr && OTP_secret_base32_length > 0
@@ -137,14 +138,24 @@ bool validate_number(const char* buf){
   return true;
 }
 
+int check_code_on_device_ccid(struct Device *dev, uint32_t HOTP_code_to_verify){
+    assert(dev->connection_type == CONNECTION_CCID);
+    return verify_code_ccid(dev->mp_devhandle_ccid, HOTP_code_to_verify);
+}
+
 int check_code_on_device(struct Device *dev, const char *HOTP_code_to_verify) {
   int res;
   cmd_query_verify_code verify_code = {};
   if (!validate_number(HOTP_code_to_verify)) return RET_BADLY_FORMATTED_HOTP_CODE;
   const long conversion_results = strtol10_s(HOTP_code_to_verify);
   if (conversion_results < HOTP_MIN_INT || conversion_results >= HOTP_MAX_INT) return RET_BADLY_FORMATTED_HOTP_CODE;
-  verify_code.otp_code_to_verify = (uint32_t) conversion_results;
 
+    if (dev->connection_type == CONNECTION_CCID){
+        return check_code_on_device_ccid(dev, conversion_results);
+    }
+
+    assert(dev->connection_type == CONNECTION_HID);
+    verify_code.otp_code_to_verify = (uint32_t) conversion_results;
   res = device_send(dev, (uint8_t *) &verify_code, sizeof(verify_code), VERIFY_OTP_CODE);
   if (res != RET_NO_ERROR) return res;
   res = device_receive_buf(dev);

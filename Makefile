@@ -11,7 +11,10 @@ SRC:= \
 	$(SRCDIR)/min.c \
 	$(SRCDIR)/version.c \
 	$(SRCDIR)/return_codes.c \
-	$(SRCDIR)/main.c
+	$(SRCDIR)/main.c \
+	$(SRCDIR)/tlv.c \
+	$(SRCDIR)/ccid.c \
+	$(SRCDIR)/operations_ccid.c
 
 SRC += \
 	$(SRCDIR)/hidapi/libusb/hid.c
@@ -29,7 +32,9 @@ HEADERS := \
 	$(SRCDIR)/settings.h \
 	$(SRCDIR)/version.h \
 	$(SRCDIR)/return_codes.h \
-
+	$(SRCDIR)/ccid.h \
+	$(SRCDIR)/tlv.h \
+	$(SRCDIR)/operations_ccid.h
 
 OBJS := ${SRC:.c=.o}
 

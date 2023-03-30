@@ -28,7 +28,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.c.in ${CMAKE_CURRENT_SOURCE_D
 set(SOURCE_FILES structs.h crc32.c crc32.h device.c device.h operations.c operations.h
         dev_commands.c dev_commands.h
         base32.c base32.h command_id.h random_data.c random_data.h
-        min.c min.h settings.h version.h version.c return_codes.h return_codes.c)
+        min.c min.h settings.h version.h version.c return_codes.h return_codes.c ccid.h ccid.c
+        tlv.c tlv.h
+        operations_ccid.c operations_ccid.h utils.h)
 
 add_library(nitrokey_hotp_verification_core STATIC ${SOURCE_FILES})
 
@@ -38,12 +40,14 @@ add_executable(hotp_verification main.c)
 OPTION(USE_SYSTEM_HIDAPI "Link application against system HIDAPI library" FALSE)
 IF(USE_SYSTEM_HIDAPI)
     find_package(PkgConfig)
-    pkg_search_module(HIDAPI_LIBUSB REQUIRED hidapi-libusb)
+    pkg_search_module(HIDAPI_LIBUSB REQUIRED hidapi)
     target_compile_options(hotp_verification PRIVATE ${HIDAPI_LIBUSB_CFLAGS})
     target_link_libraries(hotp_verification nitrokey_hotp_verification_core ${HIDAPI_LIBUSB_LDFLAGS})
 ELSE()
+    include_directories(hidapi)
     include_directories(hidapi/hidapi)
     include_directories(/usr/include/libusb-1.0)
+    include_directories(/usr/include)
     add_library(hidapi-libusb STATIC hidapi/libusb/hid.c)
     target_link_libraries(hidapi-libusb usb-1.0)
     target_compile_definitions(hidapi-libusb PRIVATE NK_REMOVE_PTHREAD)
@@ -54,7 +58,7 @@ OPTION(COMPILE_TESTS "Compile Catch tests" FALSE)
 IF(COMPILE_TESTS)
     include_directories(tests/catch2)
     add_library(catch STATIC tests/catch_main.cpp )
-    SET(TESTS tests/test_hotp.cpp tests/test_aes_regen.cpp)
+    SET(TESTS tests/test_hotp.cpp tests/test_aes_regen.cpp test_ccid.cpp)
     foreach(testsourcefile ${TESTS} )
         get_filename_component(testname ${testsourcefile} NAME_WE )
         add_executable(${testname} ${testsourcefile} )

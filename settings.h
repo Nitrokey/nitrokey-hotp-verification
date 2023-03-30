@@ -29,4 +29,8 @@
 #define HOTP_CODE_USE_8_DIGITS false
 
 
+#define secret_size_bytes (40)
+#define slot_name ("Validation")
+#define slot_name_len ( sizeof(slot_name) - 1 )
+
 #endif //NITROKEY_HOTP_VERIFICATION_SETTINGS_H

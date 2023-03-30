@@ -26,35 +26,37 @@
 #include "version.h"
 #include "command_id.h"
 #include "return_codes.h"
+#include "ccid.h"
+#include "tlv.h"
 
-struct Device dev;
+static struct Device dev = {};
 
 int parse_cmd_and_run(int argc, char *const *argv);
 
 void print_help(char* app_name) {
-  printf("Available commands: \n"
-         "\t%s id\n"
-         "\t%s info\n"
-         "\t%s version\n"
-         "\t%s check <HOTP CODE>\n"
-         "\t%s regenerate <ADMIN PIN>\n"
-         "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]\n",
-         app_name, app_name, app_name, app_name, app_name, app_name);
+    printf("Available commands: \n"
+           "\t%s id\n"
+           "\t%s info\n"
+           "\t%s version\n"
+           "\t%s check <HOTP CODE>\n"
+           "\t%s regenerate <ADMIN PIN>\n"
+           "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]\n",
+           app_name, app_name, app_name, app_name, app_name, app_name);
 }
 
 
-int main(int argc, char* argv[]) {
-  printf("HOTP code verification application, version %s\n", VERSION);
+int main(int argc, char *argv[]) {
+    printf("HOTP code verification application, version %s\n", VERSION);
 
-  int res;
+    int res;
 
-  if(argc != 1){
-    res = device_connect(&dev);
-    if (res != true){
-      printf("Could not connect with the device\n");
-      return EXIT_CONNECTION_ERROR;
+    if (argc != 1) {
+        res = device_connect(&dev);
+        if (res != true) {
+            printf("Could not connect with the device\n");
+            return EXIT_CONNECTION_ERROR;
+        }
     }
-  }
 
   res = parse_cmd_and_run(argc, argv);
   if (res != dev_ok && res != RET_NO_ERROR && res != RET_VALIDATION_PASSED && res != RET_VALIDATION_FAILED){

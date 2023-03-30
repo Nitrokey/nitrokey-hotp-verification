@@ -24,10 +24,18 @@
 
 #include <stdint.h>
 #include <hidapi/hidapi.h>
+#include <libusb.h>
 #include "structs.h"
 
 #define nullptr (NULL)
 #define TEMPORARY_PASSWORD_LENGTH (25)
+
+typedef enum {
+    CONNECTION_UNKNOWN,
+    CONNECTION_HID,
+    CONNECTION_CCID,
+    CONNECTION_LENGTH
+} ConnectionType;
 
 typedef struct VidPid {
   uint16_t vid;
@@ -38,6 +46,9 @@ typedef struct VidPid {
 
 struct Device {
   hid_device * mp_devhandle;
+  libusb_device_handle * mp_devhandle_ccid;
+  libusb_context *ctx_ccid;
+  ConnectionType connection_type;
   VidPid dev_info;
   struct DeviceQuery packet_query;
   struct DeviceResponse packet_response;
