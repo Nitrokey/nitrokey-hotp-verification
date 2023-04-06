@@ -4,16 +4,19 @@ project('hotp-verification', 'c',
 lusb = dependency('libusb-1.0')
 
 src = [
-'crc32.c',
-'device.c',
-'operations.c',
-'dev_commands.c',
-'base32.c',
-'random_data.c',
-'min.c',
-'version.c',
-'return_codes.c',
-'main.c',
+'src/crc32.c',
+'src/device.c',
+'src/operations.c',
+'src/dev_commands.c',
+'src/base32.c',
+'src/random_data.c',
+'src/min.c',
+'src/version.c',
+'src/return_codes.c',
+'src/main.c',
+'src/tlv.c',
+'src/ccid.c',
+'src/operations_ccid.c',
 'hidapi/libusb/hid.c'
 ]
 
@@ -26,7 +29,7 @@ version_data.set('PROJECT_VERSION_MINOR', version_minor)
 # We don't want to substitute it by noop
 version_data.set('GIT_VERSION_PLACEHOLDER', '@VCS_TAG@')
 version_cc_in = configure_file(
-  input : 'version.c.in',
+  input : 'src/version.c.in',
   output : 'version.c.in',
   configuration : version_data,
 )
@@ -49,6 +52,7 @@ common_flags = [
 
 incdir = ([
 include_directories('.'),
+include_directories('src/'),
 include_directories('hidapi/hidapi'),
 ])
 

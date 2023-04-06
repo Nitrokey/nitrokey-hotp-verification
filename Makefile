@@ -1,4 +1,4 @@
-SRCDIR=.
+SRCDIR=src
 PKGCONFIG=pkg-config
 
 SRC:= \
@@ -17,7 +17,7 @@ SRC:= \
 	$(SRCDIR)/operations_ccid.c
 
 SRC += \
-	$(SRCDIR)/hidapi/libusb/hid.c
+	./hidapi/libusb/hid.c
 
 HEADERS := \
 	$(SRCDIR)/crc32.h \
@@ -58,7 +58,7 @@ all: $(OUT)
 	sha256sum $^
 
 clean:
-	-rm $(OBJS) $(OUT) version.c
+	-rm $(OBJS) $(OUT) $(SRCDIR)/version.c
 
 $(OUT): $(OBJS)
 	$(CC) $^ $(LDFLAGS)  -o $@

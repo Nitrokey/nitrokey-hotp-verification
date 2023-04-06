@@ -23,18 +23,15 @@ IF(ADD_GIT_INFO)
 ENDIF()
 
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.c.in ${CMAKE_CURRENT_SOURCE_DIR}/version.c @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/version.c.in ${CMAKE_CURRENT_SOURCE_DIR}/src/version.c @ONLY)
 
-set(SOURCE_FILES structs.h crc32.c crc32.h device.c device.h operations.c operations.h
-        dev_commands.c dev_commands.h
-        base32.c base32.h command_id.h random_data.c random_data.h
-        min.c min.h settings.h version.h version.c return_codes.h return_codes.c ccid.h ccid.c
-        tlv.c tlv.h
-        operations_ccid.c operations_ccid.h utils.h)
+set(SOURCE_FILES
+        src/structs.h src/crc32.c src/crc32.h src/device.c src/device.h src/operations.c src/operations.h src/dev_commands.c src/dev_commands.h src/base32.c src/base32.h src/command_id.h src/random_data.c src/random_data.h src/min.c src/min.h src/settings.h src/version.h src/version.c src/return_codes.h src/return_codes.c src/ccid.h src/ccid.c src/tlv.c src/tlv.h src/operations_ccid.c src/operations_ccid.h src/utils.h
+        )
 
 add_library(nitrokey_hotp_verification_core STATIC ${SOURCE_FILES})
 
-add_executable(hotp_verification main.c)
+add_executable(hotp_verification src/main.c)
 
 
 OPTION(USE_SYSTEM_HIDAPI "Link application against system HIDAPI library" FALSE)

@@ -22,7 +22,7 @@
 #include "catch.hpp"
 
 extern "C" {
-  #include "../operations.h"
+  #include "../src/operations.h"
 }
 
 const char* base32_secret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
@@ -130,8 +130,8 @@ TEST_CASE("Test code with maximum offsets", "[HOTP]") {
 }
 
 
-#include "../device.h"
-#include "../settings.h"
+#include "../src/device.h"
+#include "../src/settings.h"
 
 TEST_CASE("Try to set the HOTP secret with wrong PIN and test PIN counters", "[HOTP]") {
   int res;
@@ -185,7 +185,7 @@ TEST_CASE("Verify base32 string", "[Helper]") {
   REQUIRE(verify_base32(valid_base32.c_str(), valid_base32.length()));
 }
 
-#include "../base32.h"
+#include "../src/base32.h"
 #include <cstring>
 TEST_CASE("Verify base32 string of secret containing null byte", "[Helper]") {
 //  https://github.com/Nitrokey/nitrokey-hotp-verification/issues/6
