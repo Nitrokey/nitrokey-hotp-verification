@@ -22,11 +22,11 @@
 #ifndef NITROKEY_HOTP_VERIFICATION_CCID_H
 #define NITROKEY_HOTP_VERIFICATION_CCID_H
 
-#include <stdint.h>
-#include <libusb.h>
+#include "device.h"
 #include "stdbool.h"
 #include "tlv.h"
-#include "device.h"
+#include <libusb.h>
+#include <stdint.h>
 
 uint32_t
 icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int32_t data_len, uint8_t slot, uint8_t seq,
@@ -42,8 +42,8 @@ typedef struct {
     uint8_t *data;
     uint32_t data_len;
     uint16_t data_status_code;
-//    const uint8_t *buffer;
-//    const uint32_t buffer_len;
+    //    const uint8_t *buffer;
+    //    const uint32_t buffer_len;
 } IccResult;
 
 IccResult parse_icc_result(uint8_t *buf, size_t buf_len);
@@ -68,8 +68,8 @@ char *ccid_error_message(uint16_t status_code);
 
 int icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV tlvs[], int tlvs_count, int ins);
 libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[], int devices_count);
-int ccid_init( libusb_device_handle* handle);
-int send_select_ccid(libusb_device_handle* handle, uint8_t buf[], size_t buf_size, IccResult *iccResult);
+int ccid_init(libusb_device_handle *handle);
+int send_select_ccid(libusb_device_handle *handle, uint8_t buf[], size_t buf_size, IccResult *iccResult);
 
 
 enum {
@@ -119,6 +119,6 @@ enum {
     Ins_GetResponse = 0xc0,
 };
 
-#define ARR_LEN(x) (sizeof((x)) / sizeof ((x)[0]) )
+#define ARR_LEN(x) (sizeof((x)) / sizeof((x)[0]))
 
-#endif //NITROKEY_HOTP_VERIFICATION_CCID_H
+#endif//NITROKEY_HOTP_VERIFICATION_CCID_H

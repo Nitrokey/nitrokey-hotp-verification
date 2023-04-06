@@ -23,22 +23,22 @@
 #define NITROKEY_HOTP_VERIFICATION_COMMAND_ID_H
 
 enum command_status {
-  dev_ok = 0,
-  wrong_CRC,
-  wrong_slot,
-  dev_slot_not_programmed,
-  dev_wrong_password  = 4,
-  not_authorized,
-  timestamp_warning,
-  no_name_error,
-  not_supported,
-  dev_unknown_command,
-  AES_dec_failed,
-  dev_command_status_range
+    dev_ok = 0,
+    wrong_CRC,
+    wrong_slot,
+    dev_slot_not_programmed,
+    dev_wrong_password = 4,
+    not_authorized,
+    timestamp_warning,
+    no_name_error,
+    not_supported,
+    dev_unknown_command,
+    AES_dec_failed,
+    dev_command_status_range
 };
 
 enum {
-GET_STATUS = 0x00,
+    GET_STATUS = 0x00,
     WRITE_TO_SLOT = 0x01,
     READ_SLOT_NAME = 0x02,
     READ_SLOT = 0x03,
@@ -68,23 +68,23 @@ GET_STATUS = 0x00,
     DISABLE_CRYPTED_PARI = 0x20 + 1,
     ENABLE_HIDDEN_CRYPTED_PARI = 0x20 + 2,
     DISABLE_HIDDEN_CRYPTED_PARI = 0x20 + 3,
-    ENABLE_FIRMWARE_UPDATE = 0x20 + 4, //enables update mode
+    ENABLE_FIRMWARE_UPDATE = 0x20 + 4,//enables update mode
     EXPORT_FIRMWARE_TO_FILE = 0x20 + 5,
     GENERATE_NEW_KEYS = 0x20 + 6,
     FILL_SD_CARD_WITH_RANDOM_CHARS = 0x20 + 7,
 
-    WRITE_STATUS_DATA = 0x20 + 8, //@unused
+    WRITE_STATUS_DATA = 0x20 + 8,//@unused
     ENABLE_READONLY_UNCRYPTED_LUN = 0x20 + 9,
     ENABLE_READWRITE_UNCRYPTED_LUN = 0x20 + 10,
 
-    SEND_PASSWORD_MATRIX = 0x20 + 11, //@unused
-    SEND_PASSWORD_MATRIX_PINDATA = 0x20 + 12, //@unused
-    SEND_PASSWORD_MATRIX_SETUP = 0x20 + 13, //@unused
+    SEND_PASSWORD_MATRIX = 0x20 + 11,        //@unused
+    SEND_PASSWORD_MATRIX_PINDATA = 0x20 + 12,//@unused
+    SEND_PASSWORD_MATRIX_SETUP = 0x20 + 13,  //@unused
 
     GET_DEVICE_STATUS = 0x20 + 14,
     SEND_DEVICE_STATUS = 0x20 + 15,
 
-    SEND_HIDDEN_VOLUME_PASSWORD = 0x20 + 16, //@unused
+    SEND_HIDDEN_VOLUME_PASSWORD = 0x20 + 16,//@unused
     SEND_HIDDEN_VOLUME_SETUP = 0x20 + 17,
     SEND_PASSWORD = 0x20 + 18,
     SEND_NEW_PASSWORD = 0x20 + 19,
@@ -92,14 +92,14 @@ GET_STATUS = 0x00,
 
     SEND_STARTUP = 0x20 + 21,
     SEND_CLEAR_STICK_KEYS_NOT_INITIATED = 0x20 + 22,
-    SEND_LOCK_STICK_HARDWARE = 0x20 + 23, //locks firmware upgrade
+    SEND_LOCK_STICK_HARDWARE = 0x20 + 23,//locks firmware upgrade
 
     PRODUCTION_TEST = 0x20 + 24,
-    SEND_DEBUG_DATA = 0x20 + 25, //@unused
+    SEND_DEBUG_DATA = 0x20 + 25,//@unused
 
     CHANGE_UPDATE_PIN = 0x20 + 26,
 
-//added in v0.48.5
+    //added in v0.48.5
     ENABLE_ADMIN_READONLY_UNCRYPTED_LUN = 0x20 + 28,
     ENABLE_ADMIN_READWRITE_UNCRYPTED_LUN = 0x20 + 29,
     ENABLE_ADMIN_READONLY_ENCRYPTED_LUN = 0x20 + 30,
@@ -115,10 +115,10 @@ GET_STATUS = 0x00,
     PW_SAFE_ERASE_SLOT = 0x66,
     PW_SAFE_ENABLE = 0x67,
     PW_SAFE_INIT_KEY = 0x68, //@unused
-    PW_SAFE_SEND_DATA = 0x69, //@unused
+    PW_SAFE_SEND_DATA = 0x69,//@unused
     SD_CARD_HIGH_WATERMARK = 0x70,
     DETECT_SC_AES = 0x6a,
     NEW_AES_KEY = 0x6b
 };
 
-#endif //NITROKEY_HOTP_VERIFICATION_COMMAND_ID_H
+#endif//NITROKEY_HOTP_VERIFICATION_COMMAND_ID_H

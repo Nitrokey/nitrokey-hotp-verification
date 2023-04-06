@@ -20,52 +20,52 @@
  */
 
 #include "dev_commands.h"
-#include <string.h>
+#include "command_id.h"
 #include "device.h"
 #include "min.h"
 #include "operations.h"
-#include "command_id.h"
 #include "random_data.h"
-#include <stdint.h>
 #include "return_codes.h"
+#include <stdint.h>
+#include <string.h>
 
 
 int authenticate_admin(struct Device *dev, const char *admin_PIN, uint8_t *admin_temporary_password) {
-  struct FirstAuthenticate auth_st = {0};
-  if (strnlen(admin_PIN, MAX_STRING_LENGTH) > sizeof(auth_st.card_password)){
-    return RET_TOO_LONG_PIN;
-  }
+    struct FirstAuthenticate auth_st = {0};
+    if (strnlen(admin_PIN, MAX_STRING_LENGTH) > sizeof(auth_st.card_password)) {
+        return RET_TOO_LONG_PIN;
+    }
 
-  int res;
-  read_random_bytes_to_buf(dev->admin_temporary_password, sizeof(dev->admin_temporary_password));
+    int res;
+    read_random_bytes_to_buf(dev->admin_temporary_password, sizeof(dev->admin_temporary_password));
 
-  memcpy(auth_st.card_password, admin_PIN, min(strnlen(admin_PIN, MAX_STRING_LENGTH), sizeof(auth_st.card_password)));
-  memcpy(admin_temporary_password, auth_st.temporary_password,
-         min(TEMPORARY_PASSWORD_LENGTH, sizeof(auth_st.temporary_password)));
-  res = device_send(dev, (uint8_t *) &auth_st, sizeof(auth_st), FIRST_AUTHENTICATE);
-  if (res != RET_NO_ERROR) return res;
-  res = device_receive_buf(dev);
-  if (res != RET_NO_ERROR) return res;
-  res = dev->packet_response.response_st.last_command_status;
-  return res == dev_ok ? RET_NO_ERROR : res;
+    memcpy(auth_st.card_password, admin_PIN, min(strnlen(admin_PIN, MAX_STRING_LENGTH), sizeof(auth_st.card_password)));
+    memcpy(admin_temporary_password, auth_st.temporary_password,
+           min(TEMPORARY_PASSWORD_LENGTH, sizeof(auth_st.temporary_password)));
+    res = device_send(dev, (uint8_t *) &auth_st, sizeof(auth_st), FIRST_AUTHENTICATE);
+    if (res != RET_NO_ERROR) return res;
+    res = device_receive_buf(dev);
+    if (res != RET_NO_ERROR) return res;
+    res = dev->packet_response.response_st.last_command_status;
+    return res == dev_ok ? RET_NO_ERROR : res;
 }
 
 int authenticate_user(struct Device *dev, const char *user_PIN, uint8_t *user_temporary_password) {
-  struct UserAuthenticate auth_st = {0};
-  if (strnlen(user_PIN, MAX_STRING_LENGTH) > sizeof(auth_st.card_password)){
-    return RET_TOO_LONG_PIN;
-  }
+    struct UserAuthenticate auth_st = {0};
+    if (strnlen(user_PIN, MAX_STRING_LENGTH) > sizeof(auth_st.card_password)) {
+        return RET_TOO_LONG_PIN;
+    }
 
-  int res;
-  read_random_bytes_to_buf(dev->user_temporary_password, sizeof(dev->user_temporary_password));
+    int res;
+    read_random_bytes_to_buf(dev->user_temporary_password, sizeof(dev->user_temporary_password));
 
-  memcpy(auth_st.card_password, user_PIN, min(strnlen(user_PIN, MAX_STRING_LENGTH), sizeof(auth_st.card_password)));
-  memcpy(user_temporary_password, auth_st.temporary_password,
-         min(TEMPORARY_PASSWORD_LENGTH, sizeof(auth_st.temporary_password)));
-  res = device_send(dev, (uint8_t *) &auth_st, sizeof(auth_st), USER_AUTHENTICATE);
-  if (res != RET_NO_ERROR) return res;
-  res = device_receive_buf(dev);
-  if (res != RET_NO_ERROR) return res;
-  res = dev->packet_response.response_st.last_command_status;
-  return res == dev_ok ? RET_NO_ERROR : res;
+    memcpy(auth_st.card_password, user_PIN, min(strnlen(user_PIN, MAX_STRING_LENGTH), sizeof(auth_st.card_password)));
+    memcpy(user_temporary_password, auth_st.temporary_password,
+           min(TEMPORARY_PASSWORD_LENGTH, sizeof(auth_st.temporary_password)));
+    res = device_send(dev, (uint8_t *) &auth_st, sizeof(auth_st), USER_AUTHENTICATE);
+    if (res != RET_NO_ERROR) return res;
+    res = device_receive_buf(dev);
+    if (res != RET_NO_ERROR) return res;
+    res = dev->packet_response.response_st.last_command_status;
+    return res == dev_ok ? RET_NO_ERROR : res;
 }

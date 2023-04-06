@@ -26,4 +26,4 @@ uint32_t _crc32(uint32_t crc, uint32_t data);
 uint32_t stm_crc32(const uint8_t *data, size_t size);
 
 
-#endif //NITROKEY_HOTP_VERIFICATION_CRC32_H
+#endif//NITROKEY_HOTP_VERIFICATION_CRC32_H

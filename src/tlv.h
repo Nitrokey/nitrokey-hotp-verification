@@ -40,4 +40,4 @@ typedef struct {
 int process_all(uint8_t *buf, TLV data[], int count);
 TLV get_tlv(uint8_t *buf, size_t size, int tag);
 
-#endif // NITROKEY_HOTP_VERIFICATION_TLV_H
+#endif// NITROKEY_HOTP_VERIFICATION_TLV_H

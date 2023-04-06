@@ -28,4 +28,4 @@ size_t min(size_t a, size_t b);
 //int min_i(int a, int b);
 
 
-#endif //NITROKEY_HOTP_VERIFICATION_MIN_H
+#endif//NITROKEY_HOTP_VERIFICATION_MIN_H

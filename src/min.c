@@ -19,12 +19,12 @@
  * SPDX-License-Identifier: GPL-3.0
  */
 
-#include <glob.h>
 #include "min.h"
+#include <glob.h>
 
 
 size_t min(size_t a, size_t b) {
-  return a > b ? b : a;
+    return a > b ? b : a;
 }
 
 //int min_i(int a, int b) {

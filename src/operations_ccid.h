@@ -2,8 +2,8 @@
 #ifndef NITROKEY_HOTP_VERIFICATION_OPERATIONS_CCID_H
 #define NITROKEY_HOTP_VERIFICATION_OPERATIONS_CCID_H
 
-#include <libusb.h>
 #include "device.h"
+#include <libusb.h>
 
 int set_pin_ccid(struct Device *dev, const char *admin_PIN);
 int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN);
@@ -12,4 +12,4 @@ int verify_code_ccid(libusb_device_handle *handle, const uint32_t code_to_verify
 int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *firmware_version);
 
 
-#endif //NITROKEY_HOTP_VERIFICATION_OPERATIONS_CCID_H
+#endif//NITROKEY_HOTP_VERIFICATION_OPERATIONS_CCID_H

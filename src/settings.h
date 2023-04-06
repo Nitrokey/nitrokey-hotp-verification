@@ -33,14 +33,14 @@
 
 // This name will show up in the Secrets App listing. Nitrokey Pro and Storage won't mention it.
 #define SLOT_NAME ("HEADS Validation")
-#define SLOT_NAME_LEN ( sizeof(SLOT_NAME) - 1 )
-#define MAX_PIN_ATTEMPT_COUNTER_CCID    8
-#define MAX_PIN_ATTEMPT_COUNTER_HID     3
-#define MAX_PIN_SIZE_CCID               128
-#define MAX_CCID_BUFFER_SIZE            3072
+#define SLOT_NAME_LEN (sizeof(SLOT_NAME) - 1)
+#define MAX_PIN_ATTEMPT_COUNTER_CCID 8
+#define MAX_PIN_ATTEMPT_COUNTER_HID 3
+#define MAX_PIN_SIZE_CCID 128
+#define MAX_CCID_BUFFER_SIZE 3072
 
 // Ask for PIN, if the HOTP slot is PIN-encrypted
 // #define FEATURE_CCID_ASK_FOR_PIN_ON_ERROR
 
 
-#endif //NITROKEY_HOTP_VERIFICATION_SETTINGS_H
+#endif//NITROKEY_HOTP_VERIFICATION_SETTINGS_H

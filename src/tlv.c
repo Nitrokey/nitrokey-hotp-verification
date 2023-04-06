@@ -19,13 +19,13 @@
  * SPDX-License-Identifier: GPL-3.0
  */
 
-#include <memory.h>
+#include "tlv.h"
+#include "ccid.h"
+#include "utils.h"
 #include <endian.h>
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "tlv.h"
-#include "utils.h"
-#include "ccid.h"
 
 int process_TLV(uint8_t *buf, const TLV *t) {
     int i = 0;
@@ -35,7 +35,7 @@ int process_TLV(uint8_t *buf, const TLV *t) {
             // encode string or data
             buf[i++] = t->tag;
             buf[i++] = t->length;
-            memmove(buf+i, t->v_str, t->length);
+            memmove(buf + i, t->v_str, t->length);
             i += t->length;
             break;
         case 'I':
@@ -44,16 +44,16 @@ int process_TLV(uint8_t *buf, const TLV *t) {
             buf[i++] = t->length;
             rassert(t->length == 4);
             uint32_t be = htobe32(t->v_raw);
-            memmove(buf+i, &be, t->length);
+            memmove(buf + i, &be, t->length);
             i += t->length;
             break;
         case 'B':
             // raw bytes - copy buffer directly, without adding TL pair
-            memmove(buf+i, t->v_data, t->length);
+            memmove(buf + i, t->v_data, t->length);
             i += t->length;
             break;
         default:
-            printf("invalid op %d \n", t->type);  // FIXME debug
+            printf("invalid op %d \n", t->type);// FIXME debug
             rassert(false);
             exit(1);
             break;
@@ -67,9 +67,9 @@ int process_all(uint8_t *buf, TLV *data, int count) {
     int idx = 0;
     int idx_old = 0;
     for (int i = 0; i < count; ++i) {
-        TLV * t = &data[i];
-        idx += process_TLV(buf+idx, t);
-        print_buffer(buf+idx_old, idx-idx_old, " ");
+        TLV *t = &data[i];
+        idx += process_TLV(buf + idx, t);
+        print_buffer(buf + idx_old, idx - idx_old, " ");
         idx_old = idx;
     }
     return idx;
@@ -79,15 +79,15 @@ TLV get_tlv(uint8_t *buf, size_t size, int tag) {
     TLV result = {};
     size_t i = 0;
 
-    while(i<size){
-        if (buf[i] == tag){
+    while (i < size) {
+        if (buf[i] == tag) {
             result.tag = buf[i++];
             result.length = buf[i++];
             result.v_data = &buf[i];
             return result;
         } else {
-            i++; // skip T
-            i += 1 + buf[i]; // skip L and V
+            i++;            // skip T
+            i += 1 + buf[i];// skip L and V
         }
     }
     return result;

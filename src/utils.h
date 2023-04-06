@@ -23,20 +23,30 @@
 #define NITROKEY_HOTP_VERIFICATION_UTILS_H
 
 #include <stdio.h> // for printf for rassert
-#include <stdlib.h> // for exit for rassert
+#include <stdlib.h>// for exit for rassert
 
 #define STRINGIFY_HELPER(X) #X
 #define STRINGIFY(X) STRINGIFY_HELPER(X)
-#define rassert(x) if( !(x) ){ printf("Critical assertion failed: " STRINGIFY(x) "\n"); exit(1); }
-#define check_ret(x, ret) if((x) != 0){ printf("Call failed: " STRINGIFY(x) "\n"); return (ret); }
-#define LEN_ARR(x)  (sizeof(x) / sizeof (x[0]) )
-#define unused(x) ((void)(x))
+#define rassert(x)                                               \
+    if (!(x)) {                                                  \
+        printf("Critical assertion failed: " STRINGIFY(x) "\n"); \
+        exit(1);                                                 \
+    }
+#define check_ret(x, ret)                          \
+    if ((x) != 0) {                                \
+        printf("Call failed: " STRINGIFY(x) "\n"); \
+        return (ret);                              \
+    }
+#define LEN_ARR(x) (sizeof(x) / sizeof(x[0]))
+#define unused(x) ((void) (x))
 
 #ifndef NDEBUG
 #define LOG(...) fprintf(stderr, __VA_ARGS__)
 #else
-#define LOG(...) do {} while (0)
+#define LOG(...) \
+    do {         \
+    } while (0)
 #endif
 
 
-#endif //NITROKEY_HOTP_VERIFICATION_UTILS_H
+#endif//NITROKEY_HOTP_VERIFICATION_UTILS_H

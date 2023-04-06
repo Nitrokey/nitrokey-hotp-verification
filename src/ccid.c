@@ -19,18 +19,18 @@
  * SPDX-License-Identifier: GPL-3.0
  */
 
-#include <libusb.h>
 #include "ccid.h"
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 #include "min.h"
-#include "tlv.h"
-#include "settings.h"
-#include "utils.h"
-#include "return_codes.h"
 #include "operations_ccid.h"
+#include "return_codes.h"
+#include "settings.h"
+#include "tlv.h"
+#include "utils.h"
+#include <libusb.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static const int READ_ENDPOINT = 0x81;
 
@@ -39,9 +39,9 @@ static const int WRITE_ENDPOINT = 0x01;
 static const int TIMEOUT = 1000;
 
 
-uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int32_t data_len, uint8_t slot, uint8_t seq, uint16_t param, uint8_t *data){
+uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int32_t data_len, uint8_t slot, uint8_t seq, uint16_t param, uint8_t *data) {
     static int _seq = 0;
-    if (seq == 0){
+    if (seq == 0) {
         seq = _seq++;
     }
 
@@ -58,26 +58,26 @@ uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int
     buf[i++] = 0;
     buf[i++] = param << 0;
     buf[i++] = param << 8;
-    const size_t final_data_length = min(data_len, buffer_length-i);
+    const size_t final_data_length = min(data_len, buffer_length - i);
     memmove(buf + i, data, final_data_length);
     i += final_data_length;
     return i;
 }
 
 
-uint32_t iso7816_compose(uint8_t *buf, uint32_t buffer_length, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t cls, uint8_t le,  uint8_t *data, uint8_t data_len){
+uint32_t iso7816_compose(uint8_t *buf, uint32_t buffer_length, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t cls, uint8_t le, uint8_t *data, uint8_t data_len) {
     size_t i = 0;
     buf[i++] = cls;
     buf[i++] = ins;
     buf[i++] = p1;
     buf[i++] = p2;
-    if (data != NULL && data_len != 0){
+    if (data != NULL && data_len != 0) {
         buf[i++] = data_len;
-        const size_t data_length = min(data_len, buffer_length-i-1);
+        const size_t data_length = min(data_len, buffer_length - i - 1);
         memmove(buf + i, data, data_length);
         i += data_length;
     }
-    if (le != 0){
+    if (le != 0) {
         buf[i++] = le;
     }
     return i;
@@ -85,20 +85,19 @@ uint32_t iso7816_compose(uint8_t *buf, uint32_t buffer_length, uint8_t ins, uint
 
 
 IccResult parse_icc_result(uint8_t *buf, size_t buf_len) {
-    rassert (buf_len >= 10);
+    rassert(buf_len >= 10);
     unused(buf_len);
     const uint8_t data_len = buf[1] | (buf[2] << 8) | (buf[3] << 16) | (buf[4] << 24);
     // take last 2 bytes as the status code, if there is any data returned
-    const uint16_t data_status_code = (data_len >= 2) ?
-                                      be16toh(*(uint16_t *) &buf[10 + data_len - 2]) : 0;
+    const uint16_t data_status_code = (data_len >= 2) ? be16toh(*(uint16_t *) &buf[10 + data_len - 2]) : 0;
     const IccResult i = {
             .status = buf[7],
             .chain = buf[9],
             .data = &buf[10],
             .data_len = data_len,
             .data_status_code = data_status_code,
-//            .buffer = buf,
-//            .buffer_len = buf_len
+            //            .buffer = buf,
+            //            .buffer_len = buf_len
     };
     return i;
 }
@@ -177,15 +176,15 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *buf, uint32_t buf
             print_buffer(iccResult.data, iccResult.data_len, "    returned data");
             LOG("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
         }
-        if (iccResult.data[0] == 0x61) { // 0x61 status code means data remaining, make another receive
+        if (iccResult.data[0] == 0x61) {// 0x61 status code means data remaining, make another receive
 
             uint8_t buf_sr[128];
             uint32_t send_rem_length = iso7816_compose(buf_sr, sizeof buf_sr,
-                                                  Ins_GetResponse, 0, 0, 0, 0xFF, NULL, 0);
+                                                       Ins_GetResponse, 0, 0, 0, 0xFF, NULL, 0);
             uint8_t buf_sr_2[128];
             uint32_t send_rem_icc_len = icc_compose(buf_sr_2, sizeof buf_sr_2,
-                                               0x6F, send_rem_length,
-                                               0, 0, 0, buf_sr);
+                                                    0x6F, send_rem_length,
+                                                    0, 0, 0, buf_sr);
             int actual_length_sr = 0;
             uint8_t buf_sr_recv[MAX_CCID_BUFFER_SIZE];
             // FIXME handle returned r errors
@@ -241,57 +240,121 @@ int ccid_process(libusb_device_handle *handle, uint8_t *buf, uint32_t buf_length
             }
         }
 
-    } // end for
+    }// end for
     return 0;
 }
 
-int send_select_ccid(libusb_device_handle* handle, uint8_t buf[], size_t buf_size, IccResult *iccResult){
+int send_select_ccid(libusb_device_handle *handle, uint8_t buf[], size_t buf_size, IccResult *iccResult) {
     unsigned char cmd_select[] = {
-            0x6f, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0xa4, 0x04, 0x00, 0x07, 0xa0, 0x00, 0x00,
-            0x05, 0x27, 0x21, 0x01,
+            0x6f,
+            0x0c,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xa4,
+            0x04,
+            0x00,
+            0x07,
+            0xa0,
+            0x00,
+            0x00,
+            0x05,
+            0x27,
+            0x21,
+            0x01,
     };
 
     check_ret(
             ccid_process_single(handle, buf, buf_size, cmd_select, sizeof cmd_select, iccResult),
-            RET_COMM_ERROR
-            );
+            RET_COMM_ERROR);
 
 
     return RET_SUCCESS;
 }
 
 
-int ccid_init( libusb_device_handle* handle){
+int ccid_init(libusb_device_handle *handle) {
 
     unsigned char cmd_select[] = {
-            0x6f, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0xa4, 0x04, 0x00, 0x07, 0xa0, 0x00, 0x00,
-            0x05, 0x27, 0x21, 0x01,
+            0x6f,
+            0x0c,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xa4,
+            0x04,
+            0x00,
+            0x07,
+            0xa0,
+            0x00,
+            0x00,
+            0x05,
+            0x27,
+            0x21,
+            0x01,
     };
 
     unsigned char cmd_poweron[] = {
-            0x62,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+            0x62,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
     };
 
     unsigned char cmd_poweroff[] = {
-            0x63,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+            0x63,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
     };
 
     unsigned char cmd_info[] = {
-            0x61,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+            0x61,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
     };
 
-//    unsigned char cmd_reset[] = {
-//            0x6f,0x04,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x00,0x04,0xde,0xad,
-//    };
+    //    unsigned char cmd_reset[] = {
+    //            0x6f,0x04,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x00,0x04,0xde,0xad,
+    //    };
 
     const unsigned char *data_to_send[] = {
             cmd_select,
             cmd_poweron,
             cmd_poweroff,
             cmd_info,
-//            cmd_reset
+            //            cmd_reset
     };
 
     const unsigned int data_to_send_size[] = {
@@ -299,7 +362,7 @@ int ccid_init( libusb_device_handle* handle){
             sizeof(cmd_poweron),
             sizeof(cmd_poweroff),
             sizeof(cmd_info),
-//            sizeof(cmd_reset)
+            //            sizeof(cmd_reset)
     };
 
     // FIXME set the proper CCID buffer length (270 was not enough)
@@ -331,7 +394,7 @@ int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char
     int r = libusb_bulk_transfer(device, READ_ENDPOINT, returned_data, buffer_length, actual_length, TIMEOUT);
     if (r < 0) {
         LOG("Error reading data: %s\n", libusb_strerror(r));
-            return 1;
+        return 1;
     }
     print_buffer(returned_data, (*actual_length), "recv");
     return 0;
@@ -361,9 +424,8 @@ void print_buffer(const unsigned char *buffer, const uint32_t length, const char
 }
 
 
-
 char *ccid_error_message(uint16_t status_code) {
-    if ((status_code & 0xFF00) == 0x6100){
+    if ((status_code & 0xFF00) == 0x6100) {
         return "MoreDataAvailable";
     }
     switch (status_code) {

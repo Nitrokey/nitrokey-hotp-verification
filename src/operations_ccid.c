@@ -19,17 +19,17 @@
  * SPDX-License-Identifier: GPL-3.0
  */
 
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
 #include "operations_ccid.h"
-#include "ccid.h"
-#include "tlv.h"
-#include "settings.h"
 #include "base32.h"
-#include "return_codes.h"
+#include "ccid.h"
 #include "device.h"
+#include "return_codes.h"
+#include "settings.h"
+#include "tlv.h"
 #include "utils.h"
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 int set_pin_ccid(struct Device *dev, const char *admin_PIN) {
@@ -50,13 +50,13 @@ int set_pin_ccid(struct Device *dev, const char *admin_PIN) {
     // send
     IccResult iccResult;
     int r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
-                            dev->ccid_buffer_out, icc_actual_length, &iccResult);
+                                dev->ccid_buffer_out, icc_actual_length, &iccResult);
 
-    if (r != 0){
+    if (r != 0) {
         return r;
     }
     // check status code
-    if (iccResult.data_status_code != 0x9000){
+    if (iccResult.data_status_code != 0x9000) {
         return 1;
     }
 
@@ -81,17 +81,17 @@ int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
     unsigned char recv_buf[1024] = {};
     IccResult iccResult;
     int r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
-                            data, icc_actual_length, &iccResult);
-    if (r != 0){
+                                data, icc_actual_length, &iccResult);
+    if (r != 0) {
         return r;
     }
 
     // check status code
-    if (iccResult.data_status_code == 0x6300){
+    if (iccResult.data_status_code == 0x6300) {
         // Invalid PIN or PIN attempt counter is used up
         return RET_WRONG_PIN;
     }
-    if (iccResult.data_status_code != 0x9000){
+    if (iccResult.data_status_code != 0x9000) {
         return 1;
     }
 
@@ -99,18 +99,17 @@ int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
 }
 
 
-int
-set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_base32, const uint64_t hotp_counter) {
+int set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_base32, const uint64_t hotp_counter) {
     // Decode base32 secret
     uint8_t binary_secret_buf[HOTP_SECRET_SIZE_BYTES + 2] = {0};
-    const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf+2)+2;
+    const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf + 2) + 2;
     rassert(decoded_length <= HOTP_SECRET_SIZE_BYTES);
 
     binary_secret_buf[0] = Kind_HotpReverse | Algo_Sha1;
-    binary_secret_buf[1] = (HOTP_CODE_USE_8_DIGITS)? 8 : 6;
+    binary_secret_buf[1] = (HOTP_CODE_USE_8_DIGITS) ? 8 : 6;
 
     // 0x02 if touch_button_required else 0x00
-    uint8_t properties[2] = { Tag_Properties, 0x00 };
+    uint8_t properties[2] = {Tag_Properties, 0x00};
 
     rassert(hotp_counter < 0xFFFFFFFF);
     uint32_t initial_counter_value = hotp_counter;
@@ -153,17 +152,17 @@ set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_b
     IccResult iccResult;
     r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
                             data, icc_actual_length, &iccResult);
-    if (r != 0){
+    if (r != 0) {
         return r;
     }
     // check status code
-    if (iccResult.data_status_code == 0x6a82){
+    if (iccResult.data_status_code == 0x6a82) {
         return RET_NO_PIN_ATTEMPTS;
     }
-    if (iccResult.data_status_code == 0x6982){
+    if (iccResult.data_status_code == 0x6982) {
         return RET_SECURITY_STATUS_NOT_SATISFIED;
     }
-    if (iccResult.data_status_code != 0x9000){
+    if (iccResult.data_status_code != 0x9000) {
         return RET_VALIDATION_FAILED;
     }
 
@@ -195,16 +194,16 @@ int verify_code_ccid(libusb_device_handle *handle, const uint32_t code_to_verify
     IccResult iccResult;
     r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
                             data, icc_actual_length, &iccResult);
-    if (r != 0){
+    if (r != 0) {
         return r;
     }
     // check status code
-    if (iccResult.data_status_code == 0x6A82){
+    if (iccResult.data_status_code == 0x6A82) {
         // Slot is not configured or requires PIN to proceed. Ask User for the latter.
         return RET_SLOT_NOT_CONFIGURED;
     }
 
-    if (iccResult.data_status_code != 0x9000){
+    if (iccResult.data_status_code != 0x9000) {
         return RET_VALIDATION_FAILED;
     }
 
@@ -217,21 +216,21 @@ int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *fi
     uint8_t buf[1024] = {};
     IccResult iccResult = {};
     int r = send_select_ccid(handle, buf, sizeof buf, &iccResult);
-    if (r!= RET_SUCCESS || iccResult.data_len == 0 || iccResult.data_status_code != 0x9000){
+    if (r != RET_SUCCESS || iccResult.data_len == 0 || iccResult.data_status_code != 0x9000) {
         return r;
     }
 
     TLV counter_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_PINCounter);
-    if (counter_tlv.tag != Tag_PINCounter){
+    if (counter_tlv.tag != Tag_PINCounter) {
         *attempt_counter = -1;
         return RET_NO_PIN_ATTEMPTS;
     }
     *attempt_counter = counter_tlv.v_data[0];
 
     TLV version_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_Version);
-    if (version_tlv.tag != Tag_Version){
+    if (version_tlv.tag != Tag_Version) {
         return RET_COMM_ERROR;
     }
-    *firmware_version = be16toh(*(uint16_t*) version_tlv.v_data);
+    *firmware_version = be16toh(*(uint16_t *) version_tlv.v_data);
     return RET_SUCCESS;
 }

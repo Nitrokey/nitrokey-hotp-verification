@@ -84,3 +84,7 @@ github_sha:
 	wget -c $(libremkey_url)
 	sha256sum $(GVER).tar.gz
 	@echo $(GVER)
+
+.PHONY: format
+format:
+	clang-format -i $(shell find src -type f | grep -v base32)

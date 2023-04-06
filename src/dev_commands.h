@@ -22,12 +22,12 @@
 #ifndef NITROKEY_HOTP_VERIFICATION_COMMANDS_H
 #define NITROKEY_HOTP_VERIFICATION_COMMANDS_H
 
-#include <stdint.h>
 #include "device.h"
 #include "return_codes.h"
+#include <stdint.h>
 
 int authenticate_admin(struct Device *dev, const char *admin_PIN, uint8_t *admin_temporary_password);
 int authenticate_user(struct Device *dev, const char *user_PIN, uint8_t *user_temporary_password);
 
 
-#endif //NITROKEY_HOTP_VERIFICATION_COMMANDS_H
+#endif//NITROKEY_HOTP_VERIFICATION_COMMANDS_H

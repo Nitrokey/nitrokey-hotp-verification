@@ -19,12 +19,12 @@
  * SPDX-License-Identifier: GPL-3.0
  */
 
-#include <stdint.h>
 #include <glob.h>
+#include <stdint.h>
 
 #ifndef NITROKEY_HOTP_VERIFICATION_RANDOM_H
 #define NITROKEY_HOTP_VERIFICATION_RANDOM_H
 
 size_t read_random_bytes_to_buf(uint8_t *out_buffer, size_t size);
 
-#endif //NITROKEY_HOTP_VERIFICATION_RANDOM_H
+#endif//NITROKEY_HOTP_VERIFICATION_RANDOM_H

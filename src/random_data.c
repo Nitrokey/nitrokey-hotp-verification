@@ -23,8 +23,8 @@
 #include <stdio.h>
 
 size_t read_random_bytes_to_buf(uint8_t *out_buffer, size_t size) {
-  FILE* random_source = fopen("/dev/urandom", "r");
-  const size_t read = fread(out_buffer, sizeof(uint8_t), size, random_source);
-  fclose(random_source);
-  return read;
+    FILE *random_source = fopen("/dev/urandom", "r");
+    const size_t read = fread(out_buffer, sizeof(uint8_t), size, random_source);
+    fclose(random_source);
+    return read;
 }
