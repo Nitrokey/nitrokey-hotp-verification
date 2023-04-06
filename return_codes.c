@@ -37,6 +37,7 @@ const char* res_to_error_string(int res) {
   if (res == RET_UNKNOWN_DEVICE) return "Current device is not supported or known";
   if (res == RET_NO_PIN_ATTEMPTS) return "There are no PIN attempts left";
   if (res == RET_SLOT_NOT_CONFIGURED) return "HOTP slot is not configured";
+  if (res == RET_SECURITY_STATUS_NOT_SATISFIED) return "Touch was not recognized, or there was other problem with the authentication";
   return "Unknown error";
 }
 

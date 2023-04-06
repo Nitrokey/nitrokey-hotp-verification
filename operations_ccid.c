@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <assert.h>
 #include "operations_ccid.h"
 #include "ccid.h"
 #include "tlv.h"
@@ -30,6 +29,7 @@
 #include "base32.h"
 #include "return_codes.h"
 #include "device.h"
+#include "utils.h"
 
 
 int set_pin_ccid(struct Device *dev, const char *admin_PIN) {
@@ -104,7 +104,7 @@ set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_b
     // Decode base32 secret
     uint8_t binary_secret_buf[HOTP_SECRET_SIZE_BYTES + 2] = {0};
     const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf+2)+2;
-    assert(decoded_length <= HOTP_SECRET_SIZE_BYTES);
+    rassert(decoded_length <= HOTP_SECRET_SIZE_BYTES);
 
     binary_secret_buf[0] = Kind_HotpReverse | Algo_Sha1;
     binary_secret_buf[1] = (HOTP_CODE_USE_8_DIGITS)? 8 : 6;
@@ -112,7 +112,7 @@ set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_b
     // 0x02 if touch_button_required else 0x00
     uint8_t properties[2] = { Tag_Properties, 0x00 };
 
-    assert(hotp_counter < 0xFFFFFFFF);
+    rassert(hotp_counter < 0xFFFFFFFF);
     uint32_t initial_counter_value = hotp_counter;
 
     TLV tlvs[] = {
@@ -159,6 +159,9 @@ set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_b
     // check status code
     if (iccResult.data_status_code == 0x6a82){
         return RET_NO_PIN_ATTEMPTS;
+    }
+    if (iccResult.data_status_code == 0x6982){
+        return RET_SECURITY_STATUS_NOT_SATISFIED;
     }
     if (iccResult.data_status_code != 0x9000){
         return RET_VALIDATION_FAILED;
@@ -209,8 +212,8 @@ int verify_code_ccid(libusb_device_handle *handle, const uint32_t code_to_verify
 }
 
 int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *firmware_version) {
-    assert(attempt_counter != NULL);
-    assert(firmware_version != NULL);
+    rassert(attempt_counter != NULL);
+    rassert(firmware_version != NULL);
     uint8_t buf[1024] = {};
     IccResult iccResult = {};
     int r = send_select_ccid(handle, buf, sizeof buf, &iccResult);

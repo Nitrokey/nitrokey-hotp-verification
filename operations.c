@@ -30,7 +30,6 @@
 #include "structs.h"
 #include "operations_ccid.h"
 #include "utils.h"
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,9 +73,9 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
     //Decode base32 to binary
   uint8_t binary_secret_buf[HOTP_SECRET_SIZE_BYTES] = {0}; //handling 40 bytes -> 320 bits
   const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf);
-  assert(decoded_length <= HOTP_SECRET_SIZE_BYTES);
+  rassert(decoded_length <= HOTP_SECRET_SIZE_BYTES);
 
-    assert(dev->connection_type == CONNECTION_HID);
+    rassert(dev->connection_type == CONNECTION_HID);
   //Write binary secret to the Device's HOTP#3 slot
   //But authenticate first
   res = authenticate_admin(dev, admin_PIN, dev->admin_temporary_password);
@@ -148,7 +147,7 @@ bool validate_number(const char* buf){
 }
 
 int check_code_on_device_ccid(struct Device *dev, uint32_t HOTP_code_to_verify){
-    assert(dev->connection_type == CONNECTION_CCID);
+    rassert(dev->connection_type == CONNECTION_CCID);
     int res = verify_code_ccid(dev->mp_devhandle_ccid, HOTP_code_to_verify);
 
 #ifdef FEATURE_CCID_ASK_FOR_PIN_ON_ERROR
@@ -186,7 +185,7 @@ int check_code_on_device(struct Device *dev, const char *HOTP_code_to_verify) {
         return check_code_on_device_ccid(dev, conversion_results);
     }
 
-    assert(dev->connection_type == CONNECTION_HID);
+    rassert(dev->connection_type == CONNECTION_HID);
     verify_code.otp_code_to_verify = (uint32_t) conversion_results;
   res = device_send(dev, (uint8_t *) &verify_code, sizeof(verify_code), VERIFY_OTP_CODE);
   if (res != RET_NO_ERROR) return res;
@@ -209,7 +208,7 @@ int check_code_on_device(struct Device *dev, const char *HOTP_code_to_verify) {
   return dev->packet_response.response_st.payload[0] ? RET_VALIDATION_PASSED : RET_VALIDATION_FAILED;
 }
 
-int regenerate_AES_key_Pro(struct Device *dev, char *const admin_password){
+int regenerate_AES_key_Pro(struct Device *dev, const char *const admin_password){
   if (dev->dev_info.name_short != 'P' && dev->dev_info.name_short != 'L') {
     return RET_UNKNOWN_DEVICE;
   }
@@ -253,7 +252,7 @@ int regenerate_AES_key_Pro(struct Device *dev, char *const admin_password){
   return RET_NO_ERROR;
 }
 
-int regenerate_AES_key_Storage(struct Device *dev, char *const admin_password) {
+int regenerate_AES_key_Storage(struct Device *dev, const char *const admin_password) {
   int res;
 
   //  Nitrokey Storage
@@ -287,7 +286,7 @@ int regenerate_AES_key_Storage(struct Device *dev, char *const admin_password) {
   return RET_NO_ERROR;
 }
 
-int regenerate_AES_key(struct Device *dev, char *const admin_password) {
+int regenerate_AES_key(struct Device *dev, const char *const admin_password) {
   switch (dev->dev_info.name_short) {
   case 'S': {
     return regenerate_AES_key_Storage(dev, admin_password);

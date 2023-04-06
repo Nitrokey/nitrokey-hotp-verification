@@ -39,7 +39,7 @@ bool verify_base32(const char* string, size_t len);
 
 long strtol10_s(const char *string);
 
-int regenerate_AES_key(struct Device *dev, char *const admin_password);
+int regenerate_AES_key(struct Device *dev, const char *const admin_password);
 
 
 #endif //NITROKEY_HOTP_VERIFICATION_OPERATIONS_H

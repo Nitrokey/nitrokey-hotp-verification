@@ -24,9 +24,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include <assert.h>
 #include <stdlib.h>
-
+#include "min.h"
+#include "tlv.h"
+#include "settings.h"
+#include "utils.h"
+#include "return_codes.h"
 #include "operations_ccid.h"
 
 static const int READ_ENDPOINT = 0x81;
@@ -35,12 +38,6 @@ static const int WRITE_ENDPOINT = 0x01;
 
 static const int TIMEOUT = 1000;
 
-
-#include "min.h"
-#include "tlv.h"
-#include "settings.h"
-#include "utils.h"
-#include "return_codes.h"
 
 uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int32_t data_len, uint8_t slot, uint8_t seq, uint16_t param, uint8_t *data){
     static int _seq = 0;
@@ -87,10 +84,8 @@ uint32_t iso7816_compose(uint8_t *buf, uint32_t buffer_length, uint8_t ins, uint
 }
 
 
-#define unused(x) ((void)(x))
-
 IccResult parse_icc_result(uint8_t *buf, size_t buf_len) {
-    assert (buf_len >= 10);
+    rassert (buf_len >= 10);
     unused(buf_len);
     const uint8_t data_len = buf[1] | (buf[2] << 8) | (buf[3] << 16) | (buf[4] << 24);
     // take last 2 bytes as the status code, if there is any data returned
@@ -117,13 +112,13 @@ libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[]
         return NULL;
     }
 
-    assert(devices_count == 1);
+    rassert(devices_count == 1);
     libusb_device_handle *handle = NULL;
     for (size_t i = 0; i < count; i++) {
         libusb_device *dev = devs[i];
         struct libusb_device_descriptor desc;
         if (libusb_get_device_descriptor(devs[i], &desc) >= 0) {
-            printf("%x ", desc.idVendor);
+            LOG("%x ", desc.idVendor);
             if (!(desc.idVendor == pPid->vid && desc.idProduct == pPid->pid)) {
                 continue;
             }
@@ -131,7 +126,7 @@ libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[]
 
         r = libusb_open(dev, &handle);
         if (r == LIBUSB_SUCCESS) {
-            printf("open\n");
+            LOG("open\n");
             break;
         } else {
             printf("Error opening device: %s\n", libusb_strerror(r));
@@ -150,7 +145,7 @@ libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[]
         return NULL;
     }
 
-    printf("set alt interface\n");
+    LOG("set alt interface\n");
     r = libusb_set_interface_alt_setting(handle, 0, 0);
     if (r < 0) {
         printf("Error set alt interface: %s\n", libusb_strerror(r));
@@ -177,10 +172,10 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *buf, uint32_t buf
         }
 
         IccResult iccResult = parse_icc_result(buf, buf_length);
-        printf("status %d, chain %d\n", iccResult.status, iccResult.chain);
+        LOG("status %d, chain %d\n", iccResult.status, iccResult.chain);
         if (iccResult.data_len > 0) {
             print_buffer(iccResult.data, iccResult.data_len, "    returned data");
-            printf("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
+            LOG("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
         }
         if (iccResult.data[0] == 0x61) { // 0x61 status code means data remaining, make another receive
 
@@ -197,14 +192,14 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *buf, uint32_t buf
             r = ccid_send(handle, &actual_length_sr, buf_sr_2, send_rem_icc_len);
             r = ccid_receive(handle, &actual_length_sr, buf_sr_recv, sizeof buf_sr_recv);
             iccResult = parse_icc_result(buf_sr_recv, sizeof buf_sr_recv);
-            printf("status %d, chain %d\n", iccResult.status, iccResult.chain);
+            LOG("status %d, chain %d\n", iccResult.status, iccResult.chain);
             if (iccResult.data_len > 0) {
                 print_buffer(iccResult.data, iccResult.data_len, "    returned data");
-                printf("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
+                LOG("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
             }
         }
         if (iccResult.status == 0x80) {
-            printf("Touch device if it blinks\n");
+            printf("Please touch the USB security key if it blinks\n");
             continue;
         }
         if (iccResult.chain == 0 || iccResult.chain == 2) {
@@ -229,8 +224,8 @@ int ccid_process(libusb_device_handle *handle, uint8_t *buf, uint32_t buf_length
                  int data_to_send_count, const uint32_t *data_to_send_sizes, bool continue_on_errors,
                  IccResult *result) {
     int r;
-    assert(buf != NULL);
-    assert(buf_length >= 270);
+    rassert(buf != NULL);
+    rassert(buf_length >= 270);
 
     for (int i = 0; i < data_to_send_count; ++i) {
         const unsigned char *d = data_to_send[i];
@@ -287,12 +282,16 @@ int ccid_init( libusb_device_handle* handle){
             0x61,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     };
 
-    unsigned char cmd_reset[] = {
-            0x6f,0x04,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x00,0x04,0xde,0xad,
-    };
+//    unsigned char cmd_reset[] = {
+//            0x6f,0x04,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x00,0x04,0xde,0xad,
+//    };
 
     const unsigned char *data_to_send[] = {
-            cmd_select, cmd_poweron, cmd_poweroff, cmd_info, cmd_reset
+            cmd_select,
+            cmd_poweron,
+            cmd_poweroff,
+            cmd_info,
+//            cmd_reset
     };
 
     const unsigned int data_to_send_size[] = {
@@ -300,68 +299,21 @@ int ccid_init( libusb_device_handle* handle){
             sizeof(cmd_poweron),
             sizeof(cmd_poweroff),
             sizeof(cmd_info),
-            sizeof(cmd_reset)
+//            sizeof(cmd_reset)
     };
 
     // FIXME set the proper CCID buffer length (270 was not enough)
-    unsigned char buf[1024] = {};
-    ccid_process(handle, buf, sizeof buf, data_to_send, 4, data_to_send_size, true, NULL);
-    return 0;
-}
-
-int ccid_test() {
-    libusb_context *ctx = NULL;
-    int r = libusb_init(&ctx);
-    if (r < 0) {
-        printf("Error initializing libusb: %s\n", libusb_strerror(r));
-        return 1;
-    }
-
-    libusb_device_handle *handle = get_device(ctx, NULL, 0);
-    if (handle == NULL){
-        return 1;
-    }
-
-    ccid_init(handle);
-
-    // always set the PIN; inform user beforehand that provided PIN will be used as the new one if not set
-    // this will fail on the already set PIN
-    r = set_pin_ccid(handle, "123123");
-    check_r(
-        authenticate_ccid(handle, "123123")
-    );
-//    r = set_secret_on_device_ccid(handle,
-//                                  "ORSXG5AK" /*test*/, "123123", 0);
-
-    r = set_secret_on_device_ccid(handle,
-                                  "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" /*12345678901234567890*/, 0);
-
-
-
-    printf("--------------------verify code\n");
-    r = authenticate_ccid(handle, "123123"); // no need for auth by design for the revhotp check? WRONG!
-    r = verify_code_ccid(handle, 755224);
-
-    r = authenticate_ccid(handle, "123123");
-    r = verify_code_ccid(handle, 287082);
-
-    r = authenticate_ccid(handle, "123123");
-    r = verify_code_ccid(handle, 520489);
-
-    
-    libusb_release_interface(handle, 0);
-    libusb_close(handle);
-    libusb_exit(ctx);
-
+    unsigned char buf[MAX_CCID_BUFFER_SIZE] = {};
+    ccid_process(handle, buf, sizeof buf, data_to_send, LEN_ARR(data_to_send), data_to_send_size, true, NULL);
     return 0;
 }
 
 int icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV *tlvs, int tlvs_count, int ins) {
-    uint8_t data_tlvs[1024] = {};
+    uint8_t data_tlvs[MAX_CCID_BUFFER_SIZE] = {};
     int tlvs_actual_length = process_all(data_tlvs, tlvs, tlvs_count);
 
     // encode instruction
-    uint8_t data_iso[1024] = {};
+    uint8_t data_iso[MAX_CCID_BUFFER_SIZE] = {};
     uint32_t iso_actual_length = iso7816_compose(
             data_iso, sizeof data_iso,
             ins, 0, 0, 0, 0, data_tlvs, tlvs_actual_length);
@@ -378,7 +330,7 @@ int icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV *tlvs, int tlvs_c
 int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char *returned_data, int buffer_length) {
     int r = libusb_bulk_transfer(device, READ_ENDPOINT, returned_data, buffer_length, actual_length, TIMEOUT);
     if (r < 0) {
-        printf("Error reading data: %s\n", libusb_strerror(r));
+        LOG("Error reading data: %s\n", libusb_strerror(r));
             return 1;
     }
     print_buffer(returned_data, (*actual_length), "recv");
@@ -396,11 +348,16 @@ int ccid_send(libusb_device_handle *device, int *actual_length, const unsigned c
 }
 
 void print_buffer(const unsigned char *buffer, const uint32_t length, const char *message) {
-    printf("%s ", message);
+#ifdef NDEBUG
+    unused(message);
+    unused(length);
+    unused(buffer);
+#endif
+    LOG("%s ", message);
     for (uint32_t j = 0; j < length; ++j) {
-        printf("%02x", buffer[j]);
+        LOG("%02x", buffer[j]);
     }
-    printf("\n");
+    LOG("\n");
 }
 
 

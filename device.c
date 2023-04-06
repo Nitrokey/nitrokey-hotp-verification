@@ -19,12 +19,10 @@
  * SPDX-License-Identifier: GPL-3.0
  */
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdlib.h>
 #include "device.h"
 #include "crc32.h"
 #include "structs.h"
@@ -32,6 +30,8 @@
 #include "min.h"
 #include "return_codes.h"
 #include "ccid.h"
+#include "utils.h"
+#include <assert.h>
 
 #define NITROKEY_USB_VID      0x20a0
 #define NITROKEY_PRO_USB_PID      0x4108
@@ -99,14 +99,14 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
   }
 
   if (out_data != nullptr){
-    assert(out_buffer_size != 0);
+    rassert(out_buffer_size != 0);
     memcpy(out_data, dev->packet_query.as_data+1, min(out_buffer_size, HID_REPORT_SIZE_CONST-1));
     if (out_buffer_size > HID_REPORT_SIZE_CONST-1){
       printf("WARN %s:%d: incoming data bigger than provided output buffer.\n", "device.c", __LINE__);
     }
   } else {
     //exit on wrong function parameters
-    assert(out_buffer_size == 0);
+    rassert(out_buffer_size == 0);
   }
 
   return RET_NO_ERROR;
@@ -118,14 +118,14 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
   dev->packet_query.command_id = command_ID;
 
   if (in_data != nullptr){
-    assert(data_size != 0);
+    rassert(data_size != 0);
     memcpy(dev->packet_query.payload, in_data, min(data_size, sizeof(dev->packet_query.payload)));
     if (data_size > HID_REPORT_SIZE_CONST-1){
       printf("WARN %s:%d: input data bigger than buffer.\n", "device.c", __LINE__);
     }
   } else {
     //exit on wrong function parameters
-    assert(data_size == 0);
+    rassert(data_size == 0);
   }
 
   dev->packet_query.crc = stm_crc32(dev->packet_query.as_data+1, HID_REPORT_SIZE_CONST - 5);
