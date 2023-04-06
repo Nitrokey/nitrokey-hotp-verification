@@ -40,6 +40,8 @@
 #define LIBREM_KEY_USB_VID        0x316d
 #define LIBREM_KEY_USB_PID        0x4c4b
 
+static void device_clear_buffers(struct Device *dev);
+
 void _dump(uint8_t * data, size_t datalen){
   if (datalen == 0) {
     printf("empty\n");
@@ -111,7 +113,7 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
 }
 
 int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t command_ID) {
-  _device_clear_buffers(dev);
+  device_clear_buffers(dev);
 
   dev->packet_query.command_id = command_ID;
 
@@ -145,14 +147,15 @@ int device_connect_ccid(struct Device *dev) {
     int r = libusb_init(&dev->ctx_ccid);
     if (r < 0) {
         printf("Error initializing libusb: %s\n", libusb_strerror(r));
-        return 1;
+        return false;
     }
-    dev->mp_devhandle_ccid = get_device(dev->ctx_ccid);
+    dev->mp_devhandle_ccid = get_device(dev->ctx_ccid, devices_ccid, 1);
     if (dev->mp_devhandle_ccid == NULL){
-        return 1;
+        return false;
     }
+    ccid_init(dev->mp_devhandle_ccid);
 
-    return 0;
+    return true;
 }
 int device_connect(struct Device *dev) {
     int r = device_connect_hid(dev);
@@ -198,20 +201,31 @@ int device_connect_hid(struct Device *dev) {
 }
 
 int device_disconnect(struct Device *dev) {
-  if (dev->mp_devhandle == nullptr) return 1; //TODO name error value
-  hid_close(dev->mp_devhandle);
-  dev->mp_devhandle = nullptr;
-  _device_clear_buffers(dev);
-  hid_exit();
-  return RET_NO_ERROR;
+    if (dev->connection_type == CONNECTION_CCID){
+        if (dev->mp_devhandle_ccid == nullptr) return 1; //TODO name error value
+        libusb_release_interface(dev->mp_devhandle_ccid, 0);
+        libusb_close(dev->mp_devhandle_ccid);
+        libusb_exit(dev->ctx_ccid);
+        device_clear_buffers(dev);
+        return RET_NO_ERROR;
+    } else if (dev->connection_type == CONNECTION_HID){
+        if (dev->mp_devhandle == nullptr) return 1; //TODO name error value
+        hid_close(dev->mp_devhandle);
+        dev->mp_devhandle = nullptr;
+        device_clear_buffers(dev);
+        hid_exit();
+        return RET_NO_ERROR;
+    }
+    return RET_UNKNOWN_DEVICE;
 }
 
-void _device_clear_buffers(struct Device *dev) {
+static void device_clear_buffers(struct Device *dev) {
   static_assert(sizeof(dev->packet_query.as_data) == HID_REPORT_SIZE, "Data size is not equal HID report size!");
   memset(dev->packet_query.as_data, 0, sizeof(dev->packet_query.as_data));
   memset(dev->packet_response.as_data, 0, sizeof(dev->packet_response.as_data));
   memset(dev->user_temporary_password, 0, sizeof(dev->user_temporary_password));
   memset(dev->admin_temporary_password, 0, sizeof(dev->admin_temporary_password));
+  clean_buffers(dev);
 }
 
 int device_send_buf(struct Device *dev, uint8_t command_ID) {
@@ -222,10 +236,19 @@ int device_receive_buf(struct Device *dev) {
   return device_receive(dev, nullptr, 0);
 }
 
+#include "operations_ccid.h"
+
 struct ResponseStatus device_get_status(struct Device *dev){
     if (dev->connection_type == CONNECTION_CCID){
-        printf("Not implemented\n");
-        exit(1);
+        // reuse HID buffer
+        struct ResponseStatus* status = (struct ResponseStatus*) dev->packet_response.response_st.payload;
+        int counter;
+        uint16_t firmware_version;
+        status_ccid(dev->mp_devhandle_ccid, &counter, &firmware_version);
+        status->retry_admin = counter;
+        status->retry_user = counter;
+        status->firmware_version = firmware_version;
+        return *status;
     }
 
   //getting smartcards counters takes additional 100ms
@@ -268,3 +291,8 @@ const char * command_status_to_string(uint8_t status_code){
   return "Unknown";
 }
 #undef STR
+
+void clean_buffers(struct Device* dev){
+    memset(dev->ccid_buffer_in, 0, sizeof dev->ccid_buffer_in);
+    memset(dev->ccid_buffer_out, 0, sizeof dev->ccid_buffer_out);
+}

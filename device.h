@@ -26,9 +26,16 @@
 #include <hidapi/hidapi.h>
 #include <libusb.h>
 #include "structs.h"
+#include "settings.h"
 
 #define nullptr (NULL)
 #define TEMPORARY_PASSWORD_LENGTH (25)
+#define NITROKEY_USB_VID      0x20a0
+#define NITROKEY_PRO_USB_PID      0x4108
+#define NITROKEY_STORAGE_USB_PID  0x4109
+#define NITROKEY_3_USB_PID      0x42b2
+#define LIBREM_KEY_USB_VID        0x316d
+#define LIBREM_KEY_USB_PID        0x4c4b
 
 typedef enum {
     CONNECTION_UNKNOWN,
@@ -50,8 +57,14 @@ struct Device {
   libusb_context *ctx_ccid;
   ConnectionType connection_type;
   VidPid dev_info;
-  struct DeviceQuery packet_query;
-  struct DeviceResponse packet_response;
+    union {
+        struct DeviceQuery packet_query;
+        uint8_t ccid_buffer_out[MAX_CCID_BUFFER_SIZE];
+    };
+    union {
+        struct DeviceResponse packet_response;
+        uint8_t ccid_buffer_in[MAX_CCID_BUFFER_SIZE];
+    };
   uint8_t user_temporary_password[TEMPORARY_PASSWORD_LENGTH];
   uint8_t admin_temporary_password[TEMPORARY_PASSWORD_LENGTH];
 };
@@ -66,7 +79,6 @@ int device_receive_buf(struct Device *dev);
 const char * command_status_to_string(uint8_t status_code);
 
 
-//private
-void _device_clear_buffers(struct Device *dev);
+void clean_buffers(struct Device* dev);
 
 #endif //NITROKEY_HOTP_VERIFICATION_DEVICE_H

@@ -1,10 +1,26 @@
+/*
+ * Copyright (c) 2023 Nitrokey GmbH
+ *
+ * This file is part of Nitrokey HOTP verification project.
+ *
+ * Nitrokey HOTP verification is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Nitrokey HOTP verification is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Nitrokey HOTP verification. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * SPDX-License-Identifier: GPL-3.0
+ */
 
-#include "utils.h"
-#include "min.h"
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <libusb.h>
 #include <string.h>
 #include <assert.h>
 #include "operations_ccid.h"
@@ -12,36 +28,29 @@
 #include "tlv.h"
 #include "settings.h"
 #include "base32.h"
+#include "return_codes.h"
+#include "device.h"
 
 
-int set_pin_ccid(libusb_device_handle *handle, const char *admin_PIN) {
-
-    /**
-     *         structure = [
-            tlv8.Entry(Tag.Password.value, password),
-        ]
-        self._send_receive(Instruction.SetPIN, structure=structure)
-
-     */
-
+int set_pin_ccid(struct Device *dev, const char *admin_PIN) {
     TLV tlvs[] = {
             {
                     .tag = Tag_Password,
-                    .length = strnlen(admin_PIN, 30),
+                    .length = strnlen(admin_PIN, MAX_PIN_SIZE_CCID),
                     .type = 'S',
                     .v_str = admin_PIN,
             },
     };
 
-    int r;
-    uint8_t data[1024] = {};
-    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(data, sizeof data, tlvs, ARR_LEN(tlvs), Ins_SetPIN);
+    clean_buffers(dev);
+    // encode
+    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(dev->ccid_buffer_out, sizeof dev->ccid_buffer_out,
+                                                           tlvs, ARR_LEN(tlvs), Ins_SetPIN);
 
     // send
-    unsigned char recv_buf[1024] = {};
     IccResult iccResult;
-    r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
-                            data, icc_actual_length, &iccResult);
+    int r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
+                            dev->ccid_buffer_out, icc_actual_length, &iccResult);
 
     if (r != 0){
         return r;
@@ -56,14 +65,6 @@ int set_pin_ccid(libusb_device_handle *handle, const char *admin_PIN) {
 
 
 int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
-
-    /**
-     *         structure = [
-            tlv8.Entry(Tag.Password.value, password),
-        ]
-        self._send_receive(Instruction.VerifyPIN, structure=structure)
-     */
-    int r;
     TLV tlvs[] = {
             {
                     .tag = Tag_Password,
@@ -79,57 +80,47 @@ int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
     // send
     unsigned char recv_buf[1024] = {};
     IccResult iccResult;
-    r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
+    int r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
                             data, icc_actual_length, &iccResult);
     if (r != 0){
         return r;
     }
 
     // check status code
+    if (iccResult.data_status_code == 0x6300){
+        // Invalid PIN or PIN attempt counter is used up
+        return RET_WRONG_PIN;
+    }
     if (iccResult.data_status_code != 0x9000){
         return 1;
     }
 
-    return 0;
+    return RET_SUCCESS;
 }
 
 
 int
 set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_base32, const uint64_t hotp_counter) {
-    uint8_t binary_secret_buf[secret_size_bytes+2] = {0}; //handling 40 bytes -> 320 bits
+    // Decode base32 secret
+    uint8_t binary_secret_buf[HOTP_SECRET_SIZE_BYTES + 2] = {0};
     const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf+2)+2;
-    assert(decoded_length <= secret_size_bytes);
+    assert(decoded_length <= HOTP_SECRET_SIZE_BYTES);
 
     binary_secret_buf[0] = Kind_HotpReverse | Algo_Sha1;
     binary_secret_buf[1] = (HOTP_CODE_USE_8_DIGITS)? 8 : 6;
 
-    /**
-     *         structure = [
-            tlv8.Entry(Tag.CredentialId.value, credid),
-            # header (2) + secret (N)
-            tlv8.Entry(
-                Tag.Key.value, bytes([kind.value | algo.value, digits]) + secret
-            ),
-            RawBytes([Tag.Properties.value, 0x02 if touch_button_required else 0x00]),
-            tlv8.Entry(
-                Tag.InitialCounter.value, initial_counter_value.to_bytes(4, "big")
-            ),
-        ]
-        self._send_receive(Instruction.Put, structure)
-
-     */
     // 0x02 if touch_button_required else 0x00
     uint8_t properties[2] = { Tag_Properties, 0x00 };
 
-    // FIXME check for overflow ?
+    assert(hotp_counter < 0xFFFFFFFF);
     uint32_t initial_counter_value = hotp_counter;
 
     TLV tlvs[] = {
             {
                     .tag = Tag_CredentialId,
-                    .length = slot_name_len,
+                    .length = SLOT_NAME_LEN,
                     .type = 'S',
-                    .v_str = slot_name,
+                    .v_str = SLOT_NAME,
             },
             {
                     .tag = Tag_Key,
@@ -153,13 +144,6 @@ set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_b
 
 
     int r;
-    // FIXME check if pin is set, set PIN if none
-//    r = set_pin_ccid(handle, admin_PIN);
-
-//    r = authenticate_ccid(handle, admin_PIN);
-//    if (!r) {
-//        printf("Authentication failed!\n");
-//    }
 
     uint8_t data[1024] = {};
     uint32_t icc_actual_length = icc_pack_tlvs_for_sending(data, sizeof data, tlvs, ARR_LEN(tlvs), Ins_Put);
@@ -173,11 +157,14 @@ set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_b
         return r;
     }
     // check status code
+    if (iccResult.data_status_code == 0x6a82){
+        return RET_NO_PIN_ATTEMPTS;
+    }
     if (iccResult.data_status_code != 0x9000){
-        return 1;
+        return RET_VALIDATION_FAILED;
     }
 
-    return 0;
+    return RET_NO_ERROR;
 }
 
 int verify_code_ccid(libusb_device_handle *handle, const uint32_t code_to_verify) {
@@ -186,9 +173,9 @@ int verify_code_ccid(libusb_device_handle *handle, const uint32_t code_to_verify
     TLV tlvs[] = {
             {
                     .tag = Tag_CredentialId,
-                    .length = slot_name_len,
+                    .length = SLOT_NAME_LEN,
                     .type = 'S',
-                    .v_str = slot_name,
+                    .v_str = SLOT_NAME,
             },
             {
                     .tag = Tag_Response,
@@ -209,9 +196,39 @@ int verify_code_ccid(libusb_device_handle *handle, const uint32_t code_to_verify
         return r;
     }
     // check status code
-    if (iccResult.data_status_code != 0x9000){
-        return 1;
+    if (iccResult.data_status_code == 0x6A82){
+        // Slot is not configured or requires PIN to proceed. Ask User for the latter.
+        return RET_SLOT_NOT_CONFIGURED;
     }
 
-    return 0;
+    if (iccResult.data_status_code != 0x9000){
+        return RET_VALIDATION_FAILED;
+    }
+
+    return RET_VALIDATION_PASSED;
+}
+
+int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *firmware_version) {
+    assert(attempt_counter != NULL);
+    assert(firmware_version != NULL);
+    uint8_t buf[1024] = {};
+    IccResult iccResult = {};
+    int r = send_select_ccid(handle, buf, sizeof buf, &iccResult);
+    if (r!= RET_SUCCESS || iccResult.data_len == 0 || iccResult.data_status_code != 0x9000){
+        return r;
+    }
+
+    TLV counter_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_PINCounter);
+    if (counter_tlv.tag != Tag_PINCounter){
+        *attempt_counter = -1;
+        return RET_NO_PIN_ATTEMPTS;
+    }
+    *attempt_counter = counter_tlv.v_data[0];
+
+    TLV version_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_Version);
+    if (version_tlv.tag != Tag_Version){
+        return RET_COMM_ERROR;
+    }
+    *firmware_version = be16toh(*(uint16_t*) version_tlv.v_data);
+    return RET_SUCCESS;
 }

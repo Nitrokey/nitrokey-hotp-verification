@@ -20,14 +20,11 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "operations.h"
 #include "version.h"
-#include "command_id.h"
 #include "return_codes.h"
 #include "ccid.h"
-#include "tlv.h"
 
 static struct Device dev = {};
 
@@ -50,7 +47,7 @@ int main(int argc, char *argv[]) {
 
     int res;
 
-    if (argc != 1) {
+    if (argc != 1 && argv[1][0] != 'v') {
         res = device_connect(&dev);
         if (res != true) {
             printf("Could not connect with the device\n");

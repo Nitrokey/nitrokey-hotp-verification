@@ -29,6 +29,7 @@
 #include "settings.h"
 #include "structs.h"
 #include "operations_ccid.h"
+#include "utils.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +39,7 @@
 
 static const int HOTP_SLOT_NUMBER = 3;
 
-static char *const HOTP_SLOT_NAME = slot_name;
+static char *const HOTP_SLOT_NAME = SLOT_NAME;
 
 uint8_t get_internal_slot_number_for_hotp(uint8_t slot_number) { return (uint8_t) (0x10 + slot_number); }
 
@@ -54,7 +55,7 @@ bool verify_base32(const char* string, size_t len){
 int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, const char *admin_PIN, const uint64_t hotp_counter) {
   int res;
   //Make sure secret is parsable
-  const size_t base32_string_length_limit = BASE32_LEN(secret_size_bytes);
+  const size_t base32_string_length_limit = BASE32_LEN(HOTP_SECRET_SIZE_BYTES);
   const size_t OTP_secret_base32_length = strnlen(OTP_secret_base32, base32_string_length_limit);
   if (!(OTP_secret_base32 != nullptr && OTP_secret_base32_length > 0
                                      && OTP_secret_base32_length <= base32_string_length_limit
@@ -63,11 +64,19 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
     return RET_BADLY_FORMATTED_BASE32_STRING;
   }
 
-  //Decode base32 to binary
-  uint8_t binary_secret_buf[secret_size_bytes] = {0}; //handling 40 bytes -> 320 bits
-  const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf);
-  assert(decoded_length <= secret_size_bytes);
+    if (dev->connection_type == CONNECTION_CCID){
+        set_pin_ccid(dev, admin_PIN);
+        check_ret(authenticate_ccid(dev->mp_devhandle_ccid, admin_PIN), RET_WRONG_PIN);
+        return set_secret_on_device_ccid(dev->mp_devhandle_ccid, OTP_secret_base32, hotp_counter);
+    }
 
+
+    //Decode base32 to binary
+  uint8_t binary_secret_buf[HOTP_SECRET_SIZE_BYTES] = {0}; //handling 40 bytes -> 320 bits
+  const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf);
+  assert(decoded_length <= HOTP_SECRET_SIZE_BYTES);
+
+    assert(dev->connection_type == CONNECTION_HID);
   //Write binary secret to the Device's HOTP#3 slot
   //But authenticate first
   res = authenticate_admin(dev, admin_PIN, dev->admin_temporary_password);
@@ -140,7 +149,30 @@ bool validate_number(const char* buf){
 
 int check_code_on_device_ccid(struct Device *dev, uint32_t HOTP_code_to_verify){
     assert(dev->connection_type == CONNECTION_CCID);
-    return verify_code_ccid(dev->mp_devhandle_ccid, HOTP_code_to_verify);
+    int res = verify_code_ccid(dev->mp_devhandle_ccid, HOTP_code_to_verify);
+
+#ifdef FEATURE_CCID_ASK_FOR_PIN_ON_ERROR
+    if (res == RET_SLOT_NOT_CONFIGURED){
+        // Slot is not configured or requires PIN to proceed.
+        // Ask for PIN, authenticate and try again
+
+        res = RET_WRONG_PIN;
+        while (res == RET_WRONG_PIN){
+
+            char input_admin_PIN[MAX_PIN_SIZE_CCID] = {};
+            printf("Please provide PIN to continue: ");
+            fflush(stdout);
+            size_t r = read(0, input_admin_PIN, sizeof input_admin_PIN);
+            input_admin_PIN[r-1] = 0; // remove the final \n character
+            printf("\n");
+
+            res = authenticate_ccid(dev->mp_devhandle_ccid, input_admin_PIN);
+        }
+        return verify_code_ccid(dev->mp_devhandle_ccid, HOTP_code_to_verify);
+    }
+#endif
+
+    return res;
 }
 
 int check_code_on_device(struct Device *dev, const char *HOTP_code_to_verify) {

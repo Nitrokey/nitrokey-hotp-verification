@@ -131,36 +131,48 @@ TEST_CASE("Test code with maximum offsets", "[HOTP]") {
 
 
 #include "../device.h"
+#include "../settings.h"
 
 TEST_CASE("Try to set the HOTP secret with wrong PIN and test PIN counters", "[HOTP]") {
   int res;
   res = device_connect(&dev);
   REQUIRE(res == true);
 
+    SECTION( "actual test" ) {
+        const int MAX_PIN_ATTEMPT_COUNTER =
+                (dev.connection_type == CONNECTION_HID)
+                ? MAX_PIN_ATTEMPT_COUNTER_HID
+                : MAX_PIN_ATTEMPT_COUNTER_CCID;
+
   struct ResponseStatus status = device_get_status(&dev);
-  REQUIRE(status.retry_admin >= 2);
+  REQUIRE(status.retry_admin >= MAX_PIN_ATTEMPT_COUNTER-1);
 
   res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
   status = device_get_status(&dev);
-  REQUIRE(status.retry_admin == 3);
+  REQUIRE(status.retry_admin == MAX_PIN_ATTEMPT_COUNTER);
   REQUIRE(check_code_on_device(&dev, RFC_HOTP_codes[0]) == RET_VALIDATION_PASSED);
 
+  // The slot should not be overwritten with the wrong_PIN, and it should not accept the previous HOTP code.
+  // This test requires that the PIN is not needed for getting the OTP code accepted.
+  // Fails otherwise.
   res = set_secret_on_device(&dev, base32_secret, "wrong_PIN", 0);
   REQUIRE(res == dev_wrong_password);
   status = device_get_status(&dev);
-  REQUIRE(status.retry_admin == 2);
+  REQUIRE(status.retry_admin == MAX_PIN_ATTEMPT_COUNTER-1);
   REQUIRE(check_code_on_device(&dev, RFC_HOTP_codes[0]) == RET_VALIDATION_FAILED);
 
   res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
   REQUIRE(res == RET_NO_ERROR);
   status = device_get_status(&dev);
-  REQUIRE(status.retry_admin == 3);
+  REQUIRE(status.retry_admin == MAX_PIN_ATTEMPT_COUNTER);
 
   for (auto c: RFC_HOTP_codes){
     res = check_code_on_device(&dev, c);
     REQUIRE(res == RET_VALIDATION_PASSED);
   }
+
+    }
 
   res = device_disconnect(&dev);
   REQUIRE(res == RET_NO_ERROR);
