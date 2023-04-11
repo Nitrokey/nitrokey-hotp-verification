@@ -22,7 +22,7 @@
 #include "catch.hpp"
 
 extern "C" {
-#include "../operations.h"
+#include "../src/operations.h"
 }
 
 

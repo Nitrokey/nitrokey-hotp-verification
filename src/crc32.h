@@ -22,6 +22,8 @@
 #ifndef NITROKEY_HOTP_VERIFICATION_CRC32_H
 #define NITROKEY_HOTP_VERIFICATION_CRC32_H
 
+#include <stddef.h>
+#include <stdint.h>
 uint32_t _crc32(uint32_t crc, uint32_t data);
 uint32_t stm_crc32(const uint8_t *data, size_t size);
 

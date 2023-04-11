@@ -131,12 +131,11 @@ libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[]
             printf("Error opening device: %s\n", libusb_strerror(r));
         }
     }
+    libusb_free_device_list(devs, 1);
     if (handle == NULL) {
-        printf("No working device found");
+        printf("No working device found\n");
         return NULL;
     }
-
-    libusb_free_device_list(devs, 1);
 
     r = libusb_claim_interface(handle, 0);
     if (r < 0) {

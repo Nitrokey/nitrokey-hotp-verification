@@ -29,6 +29,7 @@
 #endif
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #define HID_REPORT_SIZE (65)

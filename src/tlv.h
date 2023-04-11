@@ -22,7 +22,8 @@
 #ifndef NITROKEY_HOTP_VERIFICATION_TLV_H
 #define NITROKEY_HOTP_VERIFICATION_TLV_H
 
-#include "stdint.h"
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
     uint8_t tag;

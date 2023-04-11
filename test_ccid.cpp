@@ -3,8 +3,8 @@
 #include "catch.hpp"
 
 extern "C" {
-    #include "ccid.h"
-    #include "tlv.h"
+    #include "../src/ccid.h"
+    #include "../src/tlv.h"
 }
 
 TLV data[] = {

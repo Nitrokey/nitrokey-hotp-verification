@@ -26,6 +26,7 @@
 #include "structs.h"
 #include <hidapi/hidapi.h>
 #include <libusb.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #define nullptr (NULL)
