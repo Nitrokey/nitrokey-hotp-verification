@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Nitrokey App. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nitrokey HOTP verification. If not, see <http://www.gnu.org/licenses/>.
  *
  * SPDX-License-Identifier: GPL-3.0
  */
@@ -22,7 +22,7 @@
 #include "catch.hpp"
 
 extern "C" {
-#include "../operations.h"
+#include "../src/operations.h"
 }
 
 

@@ -1,4 +1,4 @@
-SRCDIR=.
+SRCDIR=src
 PKGCONFIG=pkg-config
 
 SRC:= \
@@ -11,10 +11,13 @@ SRC:= \
 	$(SRCDIR)/min.c \
 	$(SRCDIR)/version.c \
 	$(SRCDIR)/return_codes.c \
-	$(SRCDIR)/main.c
+	$(SRCDIR)/main.c \
+	$(SRCDIR)/tlv.c \
+	$(SRCDIR)/ccid.c \
+	$(SRCDIR)/operations_ccid.c
 
 SRC += \
-	$(SRCDIR)/hidapi/libusb/hid.c
+	./hidapi/libusb/hid.c
 
 HEADERS := \
 	$(SRCDIR)/crc32.h \
@@ -29,7 +32,9 @@ HEADERS := \
 	$(SRCDIR)/settings.h \
 	$(SRCDIR)/version.h \
 	$(SRCDIR)/return_codes.h \
-
+	$(SRCDIR)/ccid.h \
+	$(SRCDIR)/tlv.h \
+	$(SRCDIR)/operations_ccid.h
 
 OBJS := ${SRC:.c=.o}
 
@@ -53,7 +58,7 @@ all: $(OUT)
 	sha256sum $^
 
 clean:
-	-rm $(OBJS) $(OUT) version.c
+	-rm $(OBJS) $(OUT) $(SRCDIR)/version.c
 
 $(OUT): $(OBJS)
 	$(CC) $^ $(LDFLAGS)  -o $@
@@ -79,3 +84,7 @@ github_sha:
 	wget -c $(libremkey_url)
 	sha256sum $(GVER).tar.gz
 	@echo $(GVER)
+
+.PHONY: format
+format:
+	clang-format -i $(shell find src -type f | grep -v base32)

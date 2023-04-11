@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Nitrokey UG
+ * Copyright (c) 2023 Nitrokey GmbH
  *
  * This file is part of Nitrokey HOTP verification project.
  *
@@ -14,16 +14,17 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Nitrokey App. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nitrokey HOTP verification. If not, see <http://www.gnu.org/licenses/>.
  *
  * SPDX-License-Identifier: GPL-3.0
  */
 
-#ifndef NITROKEY_HOTP_VERIFICATION_MIN_H
-#define NITROKEY_HOTP_VERIFICATION_MIN_H
+#include "random_data.h"
+#include <stdio.h>
 
-size_t min(size_t a, size_t b);
-//int min_i(int a, int b);
-
-
-#endif //NITROKEY_HOTP_VERIFICATION_MIN_H
+size_t read_random_bytes_to_buf(uint8_t *out_buffer, size_t size) {
+    FILE *random_source = fopen("/dev/urandom", "r");
+    const size_t read = fread(out_buffer, sizeof(uint8_t), size, random_source);
+    fclose(random_source);
+    return read;
+}

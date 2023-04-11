@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Nitrokey UG
+ * Copyright (c) 2023 Nitrokey GmbH
  *
  * This file is part of Nitrokey HOTP verification project.
  *
@@ -14,12 +14,20 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Nitrokey App. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nitrokey HOTP verification. If not, see <http://www.gnu.org/licenses/>.
  *
  * SPDX-License-Identifier: GPL-3.0
  */
 
-const char* VERSION = "1.3";
-const char* VERSION_GIT = "@GIT_VERSION_PLACEHOLDER@";
+#ifndef NITROKEY_HOTP_VERIFICATION_COMMANDS_H
+#define NITROKEY_HOTP_VERIFICATION_COMMANDS_H
+
+#include "device.h"
+#include "return_codes.h"
+#include <stdint.h>
+
+int authenticate_admin(struct Device *dev, const char *admin_PIN, uint8_t *admin_temporary_password);
+int authenticate_user(struct Device *dev, const char *user_PIN, uint8_t *user_temporary_password);
 
 
+#endif//NITROKEY_HOTP_VERIFICATION_COMMANDS_H

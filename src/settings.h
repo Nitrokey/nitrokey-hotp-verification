@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Nitrokey UG
+ * Copyright (c) 2023 Nitrokey GmbH
  *
  * This file is part of Nitrokey HOTP verification project.
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Nitrokey App. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nitrokey HOTP verification. If not, see <http://www.gnu.org/licenses/>.
  *
  * SPDX-License-Identifier: GPL-3.0
  */
@@ -28,5 +28,19 @@
  */
 #define HOTP_CODE_USE_8_DIGITS false
 
+// handling 40 bytes -> 320 bits
+#define HOTP_SECRET_SIZE_BYTES (40)
 
-#endif //NITROKEY_HOTP_VERIFICATION_SETTINGS_H
+// This name will show up in the Secrets App listing. Nitrokey Pro and Storage won't mention it.
+#define SLOT_NAME ("HEADS Validation")
+#define SLOT_NAME_LEN (sizeof(SLOT_NAME) - 1)
+#define MAX_PIN_ATTEMPT_COUNTER_CCID 8
+#define MAX_PIN_ATTEMPT_COUNTER_HID 3
+#define MAX_PIN_SIZE_CCID 128
+#define MAX_CCID_BUFFER_SIZE 3072
+
+// Ask for PIN, if the HOTP slot is PIN-encrypted
+// #define FEATURE_CCID_ASK_FOR_PIN_ON_ERROR
+
+
+#endif//NITROKEY_HOTP_VERIFICATION_SETTINGS_H

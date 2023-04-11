@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Nitrokey UG
+ * Copyright (c) 2023 Nitrokey GmbH
  *
  * This file is part of Nitrokey HOTP verification project.
  *
@@ -14,17 +14,18 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Nitrokey App. If not, see <http://www.gnu.org/licenses/>.
+ * along with Nitrokey HOTP verification. If not, see <http://www.gnu.org/licenses/>.
  *
  * SPDX-License-Identifier: GPL-3.0
  */
 
+#ifndef NITROKEY_HOTP_VERIFICATION_CRC32_H
+#define NITROKEY_HOTP_VERIFICATION_CRC32_H
+
+#include <stddef.h>
 #include <stdint.h>
-#include <glob.h>
+uint32_t _crc32(uint32_t crc, uint32_t data);
+uint32_t stm_crc32(const uint8_t *data, size_t size);
 
-#ifndef NITROKEY_HOTP_VERIFICATION_RANDOM_H
-#define NITROKEY_HOTP_VERIFICATION_RANDOM_H
 
-size_t read_random_bytes_to_buf(uint8_t *out_buffer, size_t size);
-
-#endif //NITROKEY_HOTP_VERIFICATION_RANDOM_H
+#endif//NITROKEY_HOTP_VERIFICATION_CRC32_H
