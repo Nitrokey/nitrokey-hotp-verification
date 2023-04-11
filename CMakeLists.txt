@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project(nitrokey_hotp_verification VERSION 1.3)
+project(nitrokey_hotp_verification VERSION 1.4)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
