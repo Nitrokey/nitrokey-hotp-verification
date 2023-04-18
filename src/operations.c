@@ -45,7 +45,7 @@ uint8_t get_internal_slot_number_for_hotp(uint8_t slot_number) { return (uint8_t
 bool verify_base32(const char *string, size_t len) {
     for (size_t i = 0; i < len; i++) {
         const char c = string[i];
-        const bool in_valid_range = (c >= 'A' && c <= 'Z') || (c >= '2' && c <= '7');
+        const bool in_valid_range = (c >= 'A' && c <= 'Z') || (c >= '2' && c <= '7') || (c == '=');
         if (!in_valid_range) return false;
     }
     return true;

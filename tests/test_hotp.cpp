@@ -185,6 +185,11 @@ TEST_CASE("Verify base32 string", "[Helper]") {
   REQUIRE(verify_base32(valid_base32.c_str(), valid_base32.length()));
 }
 
+TEST_CASE("Verify base32 string with a padding character", "[Helper]") {
+  std::string valid_base32 = "NZUXI4TPNNSXSCQ=";
+  REQUIRE(verify_base32(valid_base32.c_str(), valid_base32.length()));
+}
+
 #include "../src/base32.h"
 #include <cstring>
 TEST_CASE("Verify base32 string of secret containing null byte", "[Helper]") {
