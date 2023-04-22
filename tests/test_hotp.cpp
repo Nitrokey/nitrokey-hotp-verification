@@ -68,8 +68,10 @@ TEST_CASE("Test correct codes set with initial counter value", "[HOTP]") {
   REQUIRE(res == true);
   int code = 0;
   for (auto c: RFC_HOTP_codes){
+    INFO("Setting slot with counter value " << code);
     res = set_secret_on_device(&dev, base32_secret, admin_PIN, code++);
     REQUIRE(res == RET_NO_ERROR);
+    INFO("Expecting secret " << c << "for " << code);
     res = check_code_on_device(&dev, c);
     REQUIRE(res == RET_VALIDATION_PASSED);
   }
