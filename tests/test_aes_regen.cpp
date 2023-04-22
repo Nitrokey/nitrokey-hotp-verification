@@ -30,11 +30,11 @@ struct Device dev;
 
 
 TEST_CASE("Test correct codes", "[HOTP]") {
-  int res;
-  res = device_connect(&dev);
-  REQUIRE(res == true);
-  res = regenerate_AES_key(&dev, "12345678");
-  REQUIRE(res == RET_NO_ERROR);
-  device_disconnect(&dev);
-  REQUIRE(res == RET_NO_ERROR);
+    int res;
+    res = device_connect(&dev);
+    REQUIRE(res == true);
+    res = regenerate_AES_key(&dev, "12345678");
+    REQUIRE(res == RET_NO_ERROR);
+    device_disconnect(&dev);
+    REQUIRE(res == RET_NO_ERROR);
 }
