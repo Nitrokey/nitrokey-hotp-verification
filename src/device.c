@@ -25,9 +25,9 @@
 #include "crc32.h"
 #include "min.h"
 #include "return_codes.h"
+#include "settings.h"
 #include "structs.h"
 #include "utils.h"
-#include "settings.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -171,6 +171,7 @@ int device_connect(struct Device *dev) {
     }
 
 #ifdef FEATURE_USE_CCID
+    fflush(stderr);
     fprintf(stderr, ".");
     r = device_connect_ccid(dev);
     if (r) {
@@ -181,6 +182,7 @@ int device_connect(struct Device *dev) {
     }
 #endif
 
+    fprintf(stderr, "\n");
     return false;
 }
 
