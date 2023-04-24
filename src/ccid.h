@@ -61,12 +61,12 @@ int ccid_process(libusb_device_handle *handle, uint8_t *buf, uint32_t buf_length
                  int data_to_send_count, const uint32_t data_to_send_sizes[], bool continue_on_errors,
                  IccResult *result);
 
-int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer, uint32_t receiving_buffer_length, uint8_t *sending_buffer,
+int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer, uint32_t receiving_buffer_length, const uint8_t *sending_buffer,
                         const uint32_t sending_buffer_length, IccResult *result);
 
 char *ccid_error_message(uint16_t status_code);
 
-int icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV tlvs[], int tlvs_count, int ins);
+uint32_t icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV tlvs[], int tlvs_count, int ins);
 libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[], int devices_count);
 int ccid_init(libusb_device_handle *handle);
 int send_select_ccid(libusb_device_handle *handle, uint8_t buf[], size_t buf_size, IccResult *iccResult);
