@@ -64,7 +64,7 @@ int set_pin_ccid(struct Device *dev, const char *admin_PIN) {
 }
 
 
-int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
+int authenticate_ccid(struct Device *dev, const char *admin_PIN) {
     TLV tlvs[] = {
             {
                     .tag = Tag_Password,
@@ -74,14 +74,14 @@ int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
             },
     };
 
-    uint8_t data[1024] = {};
-    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(data, sizeof data, tlvs, ARR_LEN(tlvs), Ins_VerifyPIN);
-
+    clean_buffers(dev);
+    // encode
+    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(dev->ccid_buffer_out, sizeof dev->ccid_buffer_out,
+                                                           tlvs, ARR_LEN(tlvs), Ins_VerifyPIN);
     // send
-    unsigned char recv_buf[1024] = {};
     IccResult iccResult;
-    int r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
-                                data, icc_actual_length, &iccResult);
+    int r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
+                                dev->ccid_buffer_out, icc_actual_length, &iccResult);
     if (r != 0) {
         return r;
     }
@@ -92,6 +92,7 @@ int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
         return RET_WRONG_PIN;
     }
     if (iccResult.data_status_code != 0x9000) {
+        // TODO print the error code
         return 1;
     }
 
