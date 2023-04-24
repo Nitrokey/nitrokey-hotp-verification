@@ -68,7 +68,7 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
             check_ret(authenticate_ccid(dev, admin_PIN), RET_WRONG_PIN);
         }
 #endif
-        return set_secret_on_device_ccid(dev->mp_devhandle_ccid, OTP_secret_base32, hotp_counter);
+        return set_secret_on_device_ccid(dev, OTP_secret_base32, hotp_counter);
     }
 
 
