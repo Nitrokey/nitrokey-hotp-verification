@@ -168,6 +168,7 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer,
         return r;
     }
 
+    int prev_status = 0;
     while (true) {
         r = ccid_receive(handle, &actual_length, receiving_buffer, receiving_buffer_length);
         if (r != 0) {
@@ -210,9 +211,22 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer,
             }
         }
         if (iccResult.status == AWAITING_FOR_TOUCH_STATUS_CODE) {
-            printf("Please touch the USB security key if it blinks\n");
+            if (prev_status != iccResult.status){
+                printf("Please touch the USB security key if it blinks ");
+                fflush(stdout);
+                prev_status = iccResult.status;
+            } else {
+                printf(".");
+                fflush(stdout);
+            }
             continue;
+        } else {
+            if (prev_status == AWAITING_FOR_TOUCH_STATUS_CODE) {
+                printf(". touch received\n");
+                fflush(stdout);
+            }
         }
+        prev_status = iccResult.status;
         if (iccResult.chain == 0 || iccResult.chain == 2) {
             if (result != NULL) {
                 memmove(result, &iccResult, sizeof iccResult);
