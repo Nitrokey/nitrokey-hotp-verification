@@ -39,7 +39,7 @@ static const int WRITE_ENDPOINT = 0x01;
 static const int TIMEOUT = 1000;
 
 
-uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int32_t data_len, uint8_t slot, uint8_t seq, uint16_t param, uint8_t *data) {
+uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, size_t data_len, uint8_t slot, uint8_t seq, uint16_t param, uint8_t *data) {
     static int _seq = 0;
     if (seq == 0) {
         seq = _seq++;
@@ -48,10 +48,12 @@ uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int
     size_t i = 0;
     buf[i++] = msg_type;
 
-    buf[i++] = data_len << 0;
-    buf[i++] = data_len << 8;
-    buf[i++] = data_len << 16;
-    buf[i++] = data_len << 24;
+    rassert(data_len < INT32_MAX);
+    int32_t _data_len = (int32_t) data_len;
+    buf[i++] = _data_len << 0;
+    buf[i++] = _data_len << 8;
+    buf[i++] = _data_len << 16;
+    buf[i++] = _data_len << 24;
 
     buf[i++] = slot;
     buf[i++] = seq;
