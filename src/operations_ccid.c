@@ -154,7 +154,6 @@ int set_secret_on_device_ccid(struct Device *dev, const char *OTP_secret_base32,
                                 dev->ccid_buffer_out, icc_actual_length, &iccResult);
 
 
-
     if (r != 0) {
         return r;
     }

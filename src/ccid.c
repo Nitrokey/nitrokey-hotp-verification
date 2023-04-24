@@ -211,7 +211,7 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer,
             }
         }
         if (iccResult.status == AWAITING_FOR_TOUCH_STATUS_CODE) {
-            if (prev_status != iccResult.status){
+            if (prev_status != iccResult.status) {
                 printf("Please touch the USB security key if it blinks ");
                 fflush(stdout);
                 prev_status = iccResult.status;
