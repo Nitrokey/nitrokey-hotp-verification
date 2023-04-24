@@ -27,6 +27,7 @@
 #include "return_codes.h"
 #include "structs.h"
 #include "utils.h"
+#include "settings.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -164,14 +165,21 @@ int device_connect(struct Device *dev) {
     int r = device_connect_hid(dev);
     if (r) {
         dev->connection_type = CONNECTION_HID;
+        fprintf(stderr, "\n");
+        fflush(stderr);
         return r;
     }
 
+#ifdef FEATURE_USE_CCID
+    fprintf(stderr, ".");
     r = device_connect_ccid(dev);
     if (r) {
         dev->connection_type = CONNECTION_CCID;
+        fprintf(stderr, "\n");
+        fflush(stderr);
         return r;
     }
+#endif
 
     return false;
 }
@@ -198,8 +206,6 @@ int device_connect_hid(struct Device *dev) {
             fprintf(stderr, ".");
         fflush(stderr);
     }
-    fprintf(stderr, "\n");
-    fflush(stderr);
 
     return false;
 }

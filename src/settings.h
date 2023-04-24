@@ -43,5 +43,10 @@
 // Ask for PIN, if the HOTP slot is PIN-encrypted
 // #define FEATURE_CCID_ASK_FOR_PIN_ON_ERROR
 
+// Use the provided PIN for authentication over CCID
+// #define CCID_AUTHENTICATE
+
+// Allow CCID use
+#define FEATURE_USE_CCID
 
 #endif//NITROKEY_HOTP_VERIFICATION_SETTINGS_H
