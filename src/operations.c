@@ -62,8 +62,10 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
     }
 
     if (dev->connection_type == CONNECTION_CCID) {
-        set_pin_ccid(dev, admin_PIN);
-        check_ret(authenticate_ccid(dev->mp_devhandle_ccid, admin_PIN), RET_WRONG_PIN);
+        if (strnlen(admin_PIN, 30) > 0) {
+            set_pin_ccid(dev, admin_PIN);
+            check_ret(authenticate_ccid(dev->mp_devhandle_ccid, admin_PIN), RET_WRONG_PIN);
+        }
         return set_secret_on_device_ccid(dev->mp_devhandle_ccid, OTP_secret_base32, hotp_counter);
     }
 
