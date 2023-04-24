@@ -99,6 +99,8 @@ IccResult parse_icc_result(uint8_t *buf, size_t buf_len) {
             //            .buffer = buf,
             //            .buffer_len = buf_len
     };
+    // Make sure the response do not contain overread attempts
+    rassert(i.data_len < buf_len - 10);
     return i;
 }
 
