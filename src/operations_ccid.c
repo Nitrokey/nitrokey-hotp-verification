@@ -64,7 +64,7 @@ int set_pin_ccid(struct Device *dev, const char *admin_PIN) {
 }
 
 
-int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
+int authenticate_ccid(struct Device *dev, const char *admin_PIN) {
     TLV tlvs[] = {
             {
                     .tag = Tag_Password,
@@ -74,14 +74,14 @@ int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
             },
     };
 
-    uint8_t data[1024] = {};
-    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(data, sizeof data, tlvs, ARR_LEN(tlvs), Ins_VerifyPIN);
-
+    clean_buffers(dev);
+    // encode
+    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(dev->ccid_buffer_out, sizeof dev->ccid_buffer_out,
+                                                           tlvs, ARR_LEN(tlvs), Ins_VerifyPIN);
     // send
-    unsigned char recv_buf[1024] = {};
     IccResult iccResult;
-    int r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
-                                data, icc_actual_length, &iccResult);
+    int r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
+                                dev->ccid_buffer_out, icc_actual_length, &iccResult);
     if (r != 0) {
         return r;
     }
@@ -92,6 +92,7 @@ int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
         return RET_WRONG_PIN;
     }
     if (iccResult.data_status_code != 0x9000) {
+        // TODO print the error code
         return 1;
     }
 
@@ -99,7 +100,7 @@ int authenticate_ccid(libusb_device_handle *handle, const char *admin_PIN) {
 }
 
 
-int set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secret_base32, const uint64_t hotp_counter) {
+int set_secret_on_device_ccid(struct Device *dev, const char *OTP_secret_base32, const uint64_t hotp_counter) {
     // Decode base32 secret
     uint8_t binary_secret_buf[HOTP_SECRET_SIZE_BYTES + 2] = {0};
     const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf + 2) + 2;
@@ -142,16 +143,17 @@ int set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secr
     };
 
 
-    int r;
-
-    uint8_t data[1024] = {};
-    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(data, sizeof data, tlvs, ARR_LEN(tlvs), Ins_Put);
+    clean_buffers(dev);
+    // encode
+    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(dev->ccid_buffer_out, sizeof dev->ccid_buffer_out,
+                                                           tlvs, ARR_LEN(tlvs), Ins_Put);
 
     // send
-    unsigned char recv_buf[1024] = {};
     IccResult iccResult;
-    r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
-                            data, icc_actual_length, &iccResult);
+    int r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
+                                dev->ccid_buffer_out, icc_actual_length, &iccResult);
+
+
     if (r != 0) {
         return r;
     }
@@ -169,7 +171,7 @@ int set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secr
     return RET_NO_ERROR;
 }
 
-int verify_code_ccid(libusb_device_handle *handle, const uint32_t code_to_verify) {
+int verify_code_ccid(struct Device *dev, const uint32_t code_to_verify) {
     int r;
 
     TLV tlvs[] = {
@@ -186,14 +188,17 @@ int verify_code_ccid(libusb_device_handle *handle, const uint32_t code_to_verify
                     .v_raw = code_to_verify,
             },
     };
-    uint8_t data[1024] = {};
-    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(data, sizeof data,
+
+
+    clean_buffers(dev);
+    // encode
+    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(dev->ccid_buffer_out, sizeof dev->ccid_buffer_out,
                                                            tlvs, ARR_LEN(tlvs), Ins_VerifyCode);
+
     // send
-    unsigned char recv_buf[1024] = {};
     IccResult iccResult;
-    r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
-                            data, icc_actual_length, &iccResult);
+    r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
+                            dev->ccid_buffer_out, icc_actual_length, &iccResult);
     if (r != 0) {
         return r;
     }

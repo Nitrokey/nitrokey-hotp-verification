@@ -62,11 +62,13 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
     }
 
     if (dev->connection_type == CONNECTION_CCID) {
+#ifdef CCID_AUTHENTICATE
         if (strnlen(admin_PIN, 30) > 0) {
             set_pin_ccid(dev, admin_PIN);
-            check_ret(authenticate_ccid(dev->mp_devhandle_ccid, admin_PIN), RET_WRONG_PIN);
+            check_ret(authenticate_ccid(dev, admin_PIN), RET_WRONG_PIN);
         }
-        return set_secret_on_device_ccid(dev->mp_devhandle_ccid, OTP_secret_base32, hotp_counter);
+#endif
+        return set_secret_on_device_ccid(dev, OTP_secret_base32, hotp_counter);
     }
 
 
@@ -148,7 +150,7 @@ bool validate_number(const char *buf) {
 
 int check_code_on_device_ccid(struct Device *dev, uint32_t HOTP_code_to_verify) {
     rassert(dev->connection_type == CONNECTION_CCID);
-    int res = verify_code_ccid(dev->mp_devhandle_ccid, HOTP_code_to_verify);
+    int res = verify_code_ccid(dev, HOTP_code_to_verify);
 
 #ifdef FEATURE_CCID_ASK_FOR_PIN_ON_ERROR
     if (res == RET_SLOT_NOT_CONFIGURED) {

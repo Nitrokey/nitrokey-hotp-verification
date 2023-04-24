@@ -53,9 +53,8 @@ int process_TLV(uint8_t *buf, const TLV *t) {
             i += t->length;
             break;
         default:
-            printf("invalid op %d \n", t->type);// FIXME debug
+            printf("invalid op %d \n", t->type);
             rassert(false);
-            exit(1);
             break;
     }
 

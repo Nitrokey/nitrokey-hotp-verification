@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 
 static const int READ_ENDPOINT = 0x81;
 
@@ -39,7 +40,7 @@ static const int WRITE_ENDPOINT = 0x01;
 static const int TIMEOUT = 1000;
 
 
-uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int32_t data_len, uint8_t slot, uint8_t seq, uint16_t param, uint8_t *data) {
+uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, size_t data_len, uint8_t slot, uint8_t seq, uint16_t param, uint8_t *data) {
     static int _seq = 0;
     if (seq == 0) {
         seq = _seq++;
@@ -48,10 +49,12 @@ uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int
     size_t i = 0;
     buf[i++] = msg_type;
 
-    buf[i++] = data_len << 0;
-    buf[i++] = data_len << 8;
-    buf[i++] = data_len << 16;
-    buf[i++] = data_len << 24;
+    rassert(data_len < INT32_MAX);
+    int32_t _data_len = (int32_t) data_len;
+    buf[i++] = _data_len << 0;
+    buf[i++] = _data_len << 8;
+    buf[i++] = _data_len << 16;
+    buf[i++] = _data_len << 24;
 
     buf[i++] = slot;
     buf[i++] = seq;
@@ -99,6 +102,8 @@ IccResult parse_icc_result(uint8_t *buf, size_t buf_len) {
             //            .buffer = buf,
             //            .buffer_len = buf_len
     };
+    // Make sure the response do not contain overread attempts
+    rassert(i.data_len < buf_len - 10);
     return i;
 }
 
@@ -154,52 +159,74 @@ libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[]
 }
 
 
-int ccid_process_single(libusb_device_handle *handle, uint8_t *buf, uint32_t buf_length, const uint8_t *d,
-                        const uint32_t length, IccResult *result) {
+int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer, uint32_t receiving_buffer_length, const uint8_t *sending_buffer,
+                        const uint32_t sending_buffer_length, IccResult *result) {
     int actual_length = 0, r;
 
-    r = ccid_send(handle, &actual_length, d, length);
+    r = ccid_send(handle, &actual_length, sending_buffer, sending_buffer_length);
     if (r != 0) {
         return r;
     }
 
+    int prev_status = 0;
     while (true) {
-        r = ccid_receive(handle, &actual_length, buf, buf_length);
+        r = ccid_receive(handle, &actual_length, receiving_buffer, receiving_buffer_length);
         if (r != 0) {
             return r;
         }
 
-        IccResult iccResult = parse_icc_result(buf, buf_length);
+        IccResult iccResult = parse_icc_result(receiving_buffer, receiving_buffer_length);
         LOG("status %d, chain %d\n", iccResult.status, iccResult.chain);
         if (iccResult.data_len > 0) {
             print_buffer(iccResult.data, iccResult.data_len, "    returned data");
             LOG("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
         }
-        if (iccResult.data[0] == 0x61) {// 0x61 status code means data remaining, make another receive
+        if (iccResult.data[0] == DATA_REMAINING_STATUS_CODE) {
+            // 0x61 status code means data remaining, make another receive call
 
-            uint8_t buf_sr[128];
+            uint8_t buf_sr[SMALL_CCID_BUFFER_SIZE] = {};
             uint32_t send_rem_length = iso7816_compose(buf_sr, sizeof buf_sr,
                                                        Ins_GetResponse, 0, 0, 0, 0xFF, NULL, 0);
-            uint8_t buf_sr_2[128];
+            uint8_t buf_sr_2[SMALL_CCID_BUFFER_SIZE] = {};
             uint32_t send_rem_icc_len = icc_compose(buf_sr_2, sizeof buf_sr_2,
                                                     0x6F, send_rem_length,
                                                     0, 0, 0, buf_sr);
             int actual_length_sr = 0;
-            uint8_t buf_sr_recv[MAX_CCID_BUFFER_SIZE];
-            // FIXME handle returned r errors
             r = ccid_send(handle, &actual_length_sr, buf_sr_2, send_rem_icc_len);
-            r = ccid_receive(handle, &actual_length_sr, buf_sr_recv, sizeof buf_sr_recv);
-            iccResult = parse_icc_result(buf_sr_recv, sizeof buf_sr_recv);
+            if (r != 0) {
+                return r;
+            }
+
+            memset(receiving_buffer, 0, receiving_buffer_length);
+            r = ccid_receive(handle, &actual_length_sr, receiving_buffer, receiving_buffer_length);
+            if (r != 0) {
+                return r;
+            }
+
+            iccResult = parse_icc_result(receiving_buffer, receiving_buffer_length);
             LOG("status %d, chain %d\n", iccResult.status, iccResult.chain);
             if (iccResult.data_len > 0) {
                 print_buffer(iccResult.data, iccResult.data_len, "    returned data");
                 LOG("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
             }
         }
-        if (iccResult.status == 0x80) {
-            printf("Please touch the USB security key if it blinks\n");
+        if (iccResult.status == AWAITING_FOR_TOUCH_STATUS_CODE) {
+            if (prev_status != iccResult.status) {
+                printf("Please touch the USB security key if it blinks ");
+                fflush(stdout);
+                prev_status = iccResult.status;
+            } else {
+                printf(".");
+                fflush(stdout);
+            }
             continue;
+        } else {
+            if (prev_status == AWAITING_FOR_TOUCH_STATUS_CODE) {
+                printf(". touch received\n");
+                fflush(stdout);
+            }
         }
+        prev_status = iccResult.status;
         if (iccResult.chain == 0 || iccResult.chain == 2) {
             if (result != NULL) {
                 memmove(result, &iccResult, sizeof iccResult);
@@ -344,16 +371,11 @@ int ccid_init(libusb_device_handle *handle) {
             0x00,
     };
 
-    //    unsigned char cmd_reset[] = {
-    //            0x6f,0x04,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x00,0x04,0xde,0xad,
-    //    };
-
     const unsigned char *data_to_send[] = {
             cmd_select,
             cmd_poweron,
             cmd_poweroff,
             cmd_info,
-            //            cmd_reset
     };
 
     const unsigned int data_to_send_size[] = {
@@ -361,16 +383,14 @@ int ccid_init(libusb_device_handle *handle) {
             sizeof(cmd_poweron),
             sizeof(cmd_poweroff),
             sizeof(cmd_info),
-            //            sizeof(cmd_reset)
     };
 
-    // FIXME set the proper CCID buffer length (270 was not enough)
     unsigned char buf[MAX_CCID_BUFFER_SIZE] = {};
     ccid_process(handle, buf, sizeof buf, data_to_send, LEN_ARR(data_to_send), data_to_send_size, true, NULL);
     return 0;
 }
 
-int icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV *tlvs, int tlvs_count, int ins) {
+uint32_t icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV *tlvs, int tlvs_count, int ins) {
     uint8_t data_tlvs[MAX_CCID_BUFFER_SIZE] = {};
     int tlvs_actual_length = process_all(data_tlvs, tlvs, tlvs_count);
 
@@ -389,8 +409,9 @@ int icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV *tlvs, int tlvs_c
     return icc_actual_length;
 }
 
-int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char *returned_data, int buffer_length) {
-    int r = libusb_bulk_transfer(device, READ_ENDPOINT, returned_data, buffer_length, actual_length, TIMEOUT);
+int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char *returned_data, size_t buffer_length) {
+    int32_t _buffer_length = MIN(buffer_length, INT32_MAX);
+    int r = libusb_bulk_transfer(device, READ_ENDPOINT, returned_data, _buffer_length, actual_length, TIMEOUT);
     if (r < 0) {
         LOG("Error reading data: %s\n", libusb_strerror(r));
         return 1;

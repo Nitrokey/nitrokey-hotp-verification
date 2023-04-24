@@ -38,9 +38,15 @@
 #define MAX_PIN_ATTEMPT_COUNTER_HID 3
 #define MAX_PIN_SIZE_CCID 128
 #define MAX_CCID_BUFFER_SIZE 3072
+#define SMALL_CCID_BUFFER_SIZE 128
 
 // Ask for PIN, if the HOTP slot is PIN-encrypted
 // #define FEATURE_CCID_ASK_FOR_PIN_ON_ERROR
 
+// Use the provided PIN for authentication over CCID
+// #define CCID_AUTHENTICATE
+
+// Allow CCID use
+#define FEATURE_USE_CCID
 
 #endif//NITROKEY_HOTP_VERIFICATION_SETTINGS_H

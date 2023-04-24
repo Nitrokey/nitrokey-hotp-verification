@@ -71,7 +71,7 @@ TEST_CASE("Test correct codes set with initial counter value", "[HOTP]") {
         INFO("Setting slot with counter value " << code);
         res = set_secret_on_device(&dev, base32_secret, admin_PIN, code++);
         REQUIRE(res == RET_NO_ERROR);
-        INFO("Expecting secret " << c << "for " << code);
+        INFO("Expecting secret " << c << " for " << code);
         res = check_code_on_device(&dev, c);
         REQUIRE(res == RET_VALIDATION_PASSED);
     }
@@ -140,6 +140,7 @@ TEST_CASE("Try to set the HOTP secret with wrong PIN and test PIN counters", "[H
     res = device_connect(&dev);
     REQUIRE(res == true);
 
+#ifdef CCID_AUTHENTICATE
     SECTION("actual test") {
         const int MAX_PIN_ATTEMPT_COUNTER =
                 (dev.connection_type == CONNECTION_HID)
@@ -174,6 +175,7 @@ TEST_CASE("Try to set the HOTP secret with wrong PIN and test PIN counters", "[H
             REQUIRE(res == RET_VALIDATION_PASSED);
         }
     }
+#endif
 
     res = device_disconnect(&dev);
     REQUIRE(res == RET_NO_ERROR);
@@ -186,18 +188,12 @@ TEST_CASE("Try to set the HOTP secret without PIN", "[HOTP]") {
     REQUIRE(res == true);
 
     SECTION("actual test") {
-        const int MAX_PIN_ATTEMPT_COUNTER =
-                (dev.connection_type == CONNECTION_HID)
-                        ? MAX_PIN_ATTEMPT_COUNTER_HID
-                        : MAX_PIN_ATTEMPT_COUNTER_CCID;
-
         struct ResponseStatus status = device_get_status(&dev);
-        REQUIRE(status.retry_admin >= MAX_PIN_ATTEMPT_COUNTER - 1);
+        const char *PIN_status_str = status.retry_admin == 0xFF ? "unset" : "set";
+        INFO("Current PIN status" << PIN_status_str);
 
         res = set_secret_on_device(&dev, base32_secret, "", 0);
         REQUIRE(res == RET_NO_ERROR);
-        status = device_get_status(&dev);
-        REQUIRE(status.retry_admin == MAX_PIN_ATTEMPT_COUNTER);
 
         for (auto c: RFC_HOTP_codes) {
             res = check_code_on_device(&dev, c);

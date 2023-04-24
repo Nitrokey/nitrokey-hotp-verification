@@ -25,6 +25,7 @@
 #include "crc32.h"
 #include "min.h"
 #include "return_codes.h"
+#include "settings.h"
 #include "structs.h"
 #include "utils.h"
 #include <assert.h>
@@ -164,15 +165,24 @@ int device_connect(struct Device *dev) {
     int r = device_connect_hid(dev);
     if (r) {
         dev->connection_type = CONNECTION_HID;
+        fprintf(stderr, "\n");
+        fflush(stderr);
         return r;
     }
 
+#ifdef FEATURE_USE_CCID
+    fflush(stderr);
+    fprintf(stderr, ".");
     r = device_connect_ccid(dev);
     if (r) {
         dev->connection_type = CONNECTION_CCID;
+        fprintf(stderr, "\n");
+        fflush(stderr);
         return r;
     }
+#endif
 
+    fprintf(stderr, "\n");
     return false;
 }
 
@@ -198,8 +208,6 @@ int device_connect_hid(struct Device *dev) {
             fprintf(stderr, ".");
         fflush(stderr);
     }
-    fprintf(stderr, "\n");
-    fflush(stderr);
 
     return false;
 }

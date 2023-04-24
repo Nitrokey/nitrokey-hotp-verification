@@ -2,24 +2,6 @@ project('hotp-verification', 'c',
   version : '1.4.0',
 )
 lusb = dependency('libusb-1.0')
-
-src = [
-'src/crc32.c',
-'src/device.c',
-'src/operations.c',
-'src/dev_commands.c',
-'src/base32.c',
-'src/random_data.c',
-'src/min.c',
-'src/version.c',
-'src/return_codes.c',
-'src/main.c',
-'src/tlv.c',
-'src/ccid.c',
-'src/operations_ccid.c',
-'hidapi/libusb/hid.c'
-]
-
 version_array = meson.project_version().split('.')
 version_major = version_array[0].to_int()
 version_minor = version_array[1].to_int()
@@ -38,6 +20,25 @@ version_cc = vcs_tag(
   output : 'version.c',
   fallback : 'v@0@'.format(meson.project_version()),
 )
+
+
+src = [
+'src/crc32.c',
+'src/device.c',
+'src/operations.c',
+'src/dev_commands.c',
+'src/base32.c',
+'src/random_data.c',
+'src/min.c',
+version_cc,
+'src/return_codes.c',
+'src/main.c',
+'src/tlv.c',
+'src/ccid.c',
+'src/operations_ccid.c',
+'hidapi/libusb/hid.c'
+]
+
 
 common_flags = [
 '-DNK_REMOVE_PTHREAD',

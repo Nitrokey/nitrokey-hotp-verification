@@ -29,7 +29,7 @@
 #include <stdint.h>
 
 uint32_t
-icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, int32_t data_len, uint8_t slot, uint8_t seq,
+icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, size_t data_len, uint8_t slot, uint8_t seq,
             uint16_t param, uint8_t *data);
 
 uint32_t
@@ -54,19 +54,19 @@ void print_buffer(const unsigned char *buffer, const uint32_t length, const char
 
 int ccid_send(libusb_device_handle *device, int *actual_length, const unsigned char *data, const size_t length);
 
-int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char *returned_data, int buffer_length);
+int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char *returned_data, size_t buffer_length);
 
 
 int ccid_process(libusb_device_handle *handle, uint8_t *buf, uint32_t buf_length, const uint8_t *data_to_send[],
                  int data_to_send_count, const uint32_t data_to_send_sizes[], bool continue_on_errors,
                  IccResult *result);
 
-int ccid_process_single(libusb_device_handle *handle, uint8_t *buf, uint32_t buf_length, const uint8_t *d,
-                        const uint32_t length, IccResult *result);
+int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer, uint32_t receiving_buffer_length, const uint8_t *sending_buffer,
+                        const uint32_t sending_buffer_length, IccResult *result);
 
 char *ccid_error_message(uint16_t status_code);
 
-int icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV tlvs[], int tlvs_count, int ins);
+uint32_t icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV tlvs[], int tlvs_count, int ins);
 libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[], int devices_count);
 int ccid_init(libusb_device_handle *handle);
 int send_select_ccid(libusb_device_handle *handle, uint8_t buf[], size_t buf_size, IccResult *iccResult);
@@ -118,6 +118,9 @@ enum {
     Ins_Select = 0xA4,
     Ins_GetResponse = 0xc0,
 };
+
+#define AWAITING_FOR_TOUCH_STATUS_CODE (0x80)
+#define DATA_REMAINING_STATUS_CODE (0x61)
 
 #define ARR_LEN(x) (sizeof((x)) / sizeof((x)[0]))
 
