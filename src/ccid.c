@@ -154,28 +154,28 @@ libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[]
 }
 
 
-int ccid_process_single(libusb_device_handle *handle, uint8_t *buf, uint32_t buf_length, const uint8_t *d,
-                        const uint32_t length, IccResult *result) {
+int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer, uint32_t receiving_buffer_length, uint8_t *sending_buffer,
+                        const uint32_t sending_buffer_length, IccResult *result) {
     int actual_length = 0, r;
 
-    r = ccid_send(handle, &actual_length, d, length);
+    r = ccid_send(handle, &actual_length, sending_buffer, sending_buffer_length);
     if (r != 0) {
         return r;
     }
 
     while (true) {
-        r = ccid_receive(handle, &actual_length, buf, buf_length);
+        r = ccid_receive(handle, &actual_length, receiving_buffer, receiving_buffer_length);
         if (r != 0) {
             return r;
         }
 
-        IccResult iccResult = parse_icc_result(buf, buf_length);
+        IccResult iccResult = parse_icc_result(receiving_buffer, receiving_buffer_length);
         LOG("status %d, chain %d\n", iccResult.status, iccResult.chain);
         if (iccResult.data_len > 0) {
             print_buffer(iccResult.data, iccResult.data_len, "    returned data");
             LOG("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
         }
-        if (iccResult.data[0] == 0x61) {
+        if (iccResult.data[0] == DATA_REMAINING_STATUS_CODE) {
             // 0x61 status code means data remaining, make another receive call
 
             uint8_t buf_sr[SMALL_CCID_BUFFER_SIZE];
@@ -204,7 +204,7 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *buf, uint32_t buf
                 LOG("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
             }
         }
-        if (iccResult.status == 0x80) {
+        if (iccResult.status == AWAITING_FOR_TOUCH_STATUS_CODE) {
             printf("Please touch the USB security key if it blinks\n");
             continue;
         }
@@ -390,7 +390,7 @@ int icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV *tlvs, int tlvs_c
     return icc_actual_length;
 }
 
-int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char *returned_data, int buffer_length) {
+int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char *returned_data, size_t buffer_length) {
     int r = libusb_bulk_transfer(device, READ_ENDPOINT, returned_data, buffer_length, actual_length, TIMEOUT);
     if (r < 0) {
         LOG("Error reading data: %s\n", libusb_strerror(r));

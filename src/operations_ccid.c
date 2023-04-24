@@ -148,7 +148,7 @@ int set_secret_on_device_ccid(libusb_device_handle *handle, const char *OTP_secr
     uint32_t icc_actual_length = icc_pack_tlvs_for_sending(data, sizeof data, tlvs, ARR_LEN(tlvs), Ins_Put);
 
     // send
-    unsigned char recv_buf[1024] = {};
+    uint8_t recv_buf[1024] = {};
     IccResult iccResult;
     r = ccid_process_single(handle, recv_buf, sizeof recv_buf,
                             data, icc_actual_length, &iccResult);
