@@ -175,20 +175,28 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *buf, uint32_t buf
             print_buffer(iccResult.data, iccResult.data_len, "    returned data");
             LOG("Status code: %s\n", ccid_error_message(iccResult.data_status_code));
         }
-        if (iccResult.data[0] == 0x61) {// 0x61 status code means data remaining, make another receive
+        if (iccResult.data[0] == 0x61) {
+            // 0x61 status code means data remaining, make another receive call
 
-            uint8_t buf_sr[128];
+            uint8_t buf_sr[SMALL_CCID_BUFFER_SIZE];
             uint32_t send_rem_length = iso7816_compose(buf_sr, sizeof buf_sr,
                                                        Ins_GetResponse, 0, 0, 0, 0xFF, NULL, 0);
-            uint8_t buf_sr_2[128];
+            uint8_t buf_sr_2[SMALL_CCID_BUFFER_SIZE];
             uint32_t send_rem_icc_len = icc_compose(buf_sr_2, sizeof buf_sr_2,
                                                     0x6F, send_rem_length,
                                                     0, 0, 0, buf_sr);
             int actual_length_sr = 0;
             uint8_t buf_sr_recv[MAX_CCID_BUFFER_SIZE];
-            // FIXME handle returned r errors
             r = ccid_send(handle, &actual_length_sr, buf_sr_2, send_rem_icc_len);
+            if (r != 0) {
+                return r;
+            }
+
             r = ccid_receive(handle, &actual_length_sr, buf_sr_recv, sizeof buf_sr_recv);
+            if (r != 0) {
+                return r;
+            }
+
             iccResult = parse_icc_result(buf_sr_recv, sizeof buf_sr_recv);
             LOG("status %d, chain %d\n", iccResult.status, iccResult.chain);
             if (iccResult.data_len > 0) {
