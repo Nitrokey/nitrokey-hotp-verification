@@ -352,16 +352,11 @@ int ccid_init(libusb_device_handle *handle) {
             0x00,
     };
 
-    //    unsigned char cmd_reset[] = {
-    //            0x6f,0x04,0x00,0x00,0x00,0x00,0x05,0x00,0x00,0x00,0x00,0x04,0xde,0xad,
-    //    };
-
     const unsigned char *data_to_send[] = {
             cmd_select,
             cmd_poweron,
             cmd_poweroff,
             cmd_info,
-            //            cmd_reset
     };
 
     const unsigned int data_to_send_size[] = {
@@ -369,10 +364,8 @@ int ccid_init(libusb_device_handle *handle) {
             sizeof(cmd_poweron),
             sizeof(cmd_poweroff),
             sizeof(cmd_info),
-            //            sizeof(cmd_reset)
     };
 
-    // FIXME set the proper CCID buffer length (270 was not enough)
     unsigned char buf[MAX_CCID_BUFFER_SIZE] = {};
     ccid_process(handle, buf, sizeof buf, data_to_send, LEN_ARR(data_to_send), data_to_send_size, true, NULL);
     return 0;
