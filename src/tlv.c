@@ -33,14 +33,14 @@ int process_TLV(uint8_t *buf, const TLV *t) {
     switch (t->type) {
         case 'R':
         case 'S':
-            // encode string or data
+            // Encode String or Bytes
             buf[i++] = t->tag;
             buf[i++] = t->length;
             memmove(buf + i, t->v_str, t->length);
             i += t->length;
             break;
         case 'I':
-            // encode int BE u32
+            // Encode int BE u32
             buf[i++] = t->tag;
             buf[i++] = t->length;
             rassert(t->length == 4);
@@ -49,7 +49,7 @@ int process_TLV(uint8_t *buf, const TLV *t) {
             i += t->length;
             break;
         case 'B':
-            // raw bytes - copy buffer directly, without adding TL pair
+            // encode raw Bytes - copy buffer directly, without adding TL pair
             memmove(buf + i, t->v_data, t->length);
             i += t->length;
             break;

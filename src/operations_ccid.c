@@ -215,9 +215,11 @@ int verify_code_ccid(struct Device *dev, const uint32_t code_to_verify) {
     return RET_VALIDATION_PASSED;
 }
 
-int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *firmware_version) {
+int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *firmware_version, uint32_t *serial_number) {
+    rassert(handle != NULL);
     rassert(attempt_counter != NULL);
     rassert(firmware_version != NULL);
+    rassert(serial_number != NULL);
     uint8_t buf[1024] = {};
     IccResult iccResult = {};
     int r = send_select_ccid(handle, buf, sizeof buf, &iccResult);
@@ -227,16 +229,27 @@ int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *fi
 
     TLV counter_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_PINCounter);
     if (counter_tlv.tag != Tag_PINCounter) {
+        // PIN counter not found - comm error or PIN not set
         *attempt_counter = -1;
     } else {
         *attempt_counter = counter_tlv.v_data[0];
     }
 
+    TLV serial = get_tlv(iccResult.data, iccResult.data_len, Tag_SerialNumber);
+    if (serial.tag == Tag_SerialNumber) {
+        *serial_number = be32toh(*(uint32_t *) serial.v_data);
+    } else {
+        // ignore errors - unsupported or hidden serial number
+        *serial_number = 0;
+    }
+
     TLV version_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_Version);
     if (version_tlv.tag != Tag_Version) {
+        *firmware_version = 0;
         return RET_COMM_ERROR;
     }
     *firmware_version = be16toh(*(uint16_t *) version_tlv.v_data);
+
     if (*attempt_counter == -1) {
         return RET_NO_PIN_ATTEMPTS;
     }

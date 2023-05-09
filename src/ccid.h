@@ -73,6 +73,7 @@ int send_select_ccid(libusb_device_handle *handle, uint8_t buf[], size_t buf_siz
 
 
 enum {
+    Tag_UNSET = 0,
     Tag_CredentialId = 0x71,
     Tag_NameList = 0x72,
     Tag_Key = 0x73,
@@ -84,7 +85,8 @@ enum {
     Tag_Algorithm = 0x7B,
     Tag_Password = 0x80,
     Tag_NewPassword = 0x81,
-    Tag_PINCounter = 0x82
+    Tag_PINCounter = 0x82,
+    Tag_SerialNumber = 0x8F
 };
 
 

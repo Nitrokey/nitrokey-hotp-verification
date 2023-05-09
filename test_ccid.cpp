@@ -27,14 +27,18 @@ TEST_CASE("test ccid status", "[main]") {
     REQUIRE(res);
     int counter;
     uint16_t firmware_version;
-    int res2 = status_ccid(dev.mp_devhandle_ccid, &counter, &firmware_version);
-    if (res2 == RET_SUCCESS) {
+    uint32_t serial;
+    int status_res = status_ccid(dev.mp_devhandle_ccid, &counter, &firmware_version, &serial);
+    if (status_res == RET_SUCCESS) {
         REQUIRE((0 <= counter && counter <= 8));
-    } else if (res2 == RET_NO_PIN_ATTEMPTS) {
+    } else if (status_res == RET_NO_PIN_ATTEMPTS) {
         REQUIRE(counter == -1);
     }
-    //    CHECK(firmware_version == 0x040a);
-    CHECK((firmware_version != 0 && firmware_version != 0xFFFF));
+    REQUIRE((firmware_version != 0 && firmware_version != 0xFFFF));
+    INFO("Current serial number " << serial);
+    // SN is unsupported currently by the Secrets App
+    // CHECK((serial != 0 && serial != 0xFFFFFFFF));
+    CHECK((serial == 0));
 }
 
 TEST_CASE("test tlv", "[Helper]") {
