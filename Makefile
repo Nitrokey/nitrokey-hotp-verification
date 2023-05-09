@@ -88,4 +88,4 @@ github_sha:
 .PHONY: format
 format:
 	clang-format -i $(shell find src -type f | grep -v base32)
-	clang-format -i tests/test*
+	clang-format -i tests/test* ./test_ccid.cpp
