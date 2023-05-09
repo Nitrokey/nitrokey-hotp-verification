@@ -22,6 +22,7 @@
 #include "tlv.h"
 #include "ccid.h"
 #include "utils.h"
+#include <assert.h>
 #include <endian.h>
 #include <memory.h>
 #include <stdio.h>
@@ -83,6 +84,7 @@ TLV get_tlv(uint8_t *buf, size_t size, int tag) {
             result.tag = buf[i++];
             result.length = buf[i++];
             result.v_data = &buf[i];
+            assert(i + result.length < size);// TODO move to rassert and status codes
             return result;
         } else {
             i++;            // skip T
