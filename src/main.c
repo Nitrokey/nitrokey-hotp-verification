@@ -88,13 +88,23 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 res = device_get_status(&dev, &status);
                 if (strnlen(argv[1], 10) == 2 && argv[1][1] == 'd') {
                     // id command - print ID only
-                    printf("0x%X\n", status.card_serial_u32);
+                    if (status.card_serial_u32 != 0){
+                        printf("0x%X\n", status.card_serial_u32);
+                    } else {
+                        printf("N/A\n");
+                    }
                 } else {
                     // info command - print status
-                    printf("Connected device status:\n"
-                           "\tCard serial: 0x%X\n"
-                           "\tFirmware: v%d.%d\n",
-                           status.card_serial_u32,
+                    printf("Connected device status:\n");
+
+                    printf("\tCard serial: ");
+                    if (status.card_serial_u32 != 0) {
+                        printf("0x%X\n", status.card_serial_u32);
+                    } else {
+                        printf("N/A\n");
+                    }
+
+                    printf("\tFirmware: v%d.%d\n",
                            status.firmware_version_st.major,
                            status.firmware_version_st.minor);
                     if (res != RET_NO_PIN_ATTEMPTS) {
