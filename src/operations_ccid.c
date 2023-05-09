@@ -228,14 +228,17 @@ int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *fi
     TLV counter_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_PINCounter);
     if (counter_tlv.tag != Tag_PINCounter) {
         *attempt_counter = -1;
-        return RET_NO_PIN_ATTEMPTS;
+    } else {
+        *attempt_counter = counter_tlv.v_data[0];
     }
-    *attempt_counter = counter_tlv.v_data[0];
 
     TLV version_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_Version);
     if (version_tlv.tag != Tag_Version) {
         return RET_COMM_ERROR;
     }
     *firmware_version = be16toh(*(uint16_t *) version_tlv.v_data);
+    if (*attempt_counter == -1) {
+        return RET_NO_PIN_ATTEMPTS;
+    }
     return RET_SUCCESS;
 }
