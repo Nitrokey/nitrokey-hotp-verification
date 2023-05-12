@@ -181,14 +181,15 @@ TEST_CASE("Try to set the HOTP secret with wrong PIN and test PIN counters", "[H
     REQUIRE(res == RET_NO_ERROR);
 }
 
-
 TEST_CASE("Try to set the HOTP secret without PIN", "[HOTP]") {
     int res;
     res = device_connect(&dev);
     REQUIRE(res == true);
 
     SECTION("actual test") {
-        struct ResponseStatus status = device_get_status(&dev);
+        struct ResponseStatus status = {};
+        res = device_get_status(&dev, &status);
+        REQUIRE(res == RET_NO_ERROR);
         const char *PIN_status_str = status.retry_admin == 0xFF ? "unset" : "set";
         INFO("Current PIN status" << PIN_status_str);
 

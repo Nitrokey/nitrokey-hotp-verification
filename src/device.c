@@ -250,17 +250,20 @@ int device_receive_buf(struct Device *dev) {
 
 #include "operations_ccid.h"
 
-struct ResponseStatus device_get_status(struct Device *dev) {
+int device_get_status(struct Device *dev, struct ResponseStatus *out_status) {
     if (dev->connection_type == CONNECTION_CCID) {
-        // reuse HID buffer
-        struct ResponseStatus *status = (struct ResponseStatus *) dev->packet_response.response_st.payload;
-        int counter;
-        uint16_t firmware_version;
-        status_ccid(dev->mp_devhandle_ccid, &counter, &firmware_version);
-        status->retry_admin = counter;
-        status->retry_user = counter;
-        status->firmware_version = firmware_version;
-        return *status;
+        int counter = 0;
+        uint32_t serial = 0;
+        uint16_t version = 0;
+        int res = status_ccid(dev->mp_devhandle_ccid,
+                              &counter,
+                              &version,
+                              &serial);
+        out_status->retry_admin = counter;
+        out_status->retry_user = counter;
+        out_status->card_serial_u32 = serial;
+        out_status->firmware_version = version;
+        return res;
     }
 
     //getting smartcards counters takes additional 100ms
@@ -277,7 +280,7 @@ struct ResponseStatus device_get_status(struct Device *dev) {
     struct ResponseStatus *status = (struct ResponseStatus *) dev->packet_response.response_st.payload;
     status->retry_admin = retry_admin;
     status->retry_user = retry_user;
-    return *status;
+    return RET_SUCCESS;
 }
 
 

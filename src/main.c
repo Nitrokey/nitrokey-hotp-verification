@@ -74,6 +74,14 @@ int main(int argc, char *argv[]) {
     return res;
 }
 
+void print_card_serial(struct ResponseStatus *status) {
+    if ((*status).card_serial_u32 != 0) {
+        printf("0x%X\n", (*status).card_serial_u32);
+    } else {
+        printf("N/A\n");
+    }
+}
+
 int parse_cmd_and_run(int argc, char *const *argv) {
     int res = RET_INVALID_PARAMS;
     if (argc > 1) {
@@ -84,13 +92,25 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 res = RET_NO_ERROR;
                 break;
             case 'i': {
-                struct ResponseStatus status = device_get_status(&dev);
+                struct ResponseStatus status;
+                res = device_get_status(&dev, &status);
                 if (strnlen(argv[1], 10) == 2 && argv[1][1] == 'd') {
-                    printf("0x%X\n", status.card_serial_u32);
+                    // id command - print ID only
+                    print_card_serial(&status);
                 } else {
-                    printf("Connected device status:\n \tCard serial: 0x%X\n\tFirmware: v%d.%d\n\tCard counters: Admin %d, User %d\n",
-                           status.card_serial_u32, status.firmware_version_st.major, status.firmware_version_st.minor,
-                           status.retry_admin, status.retry_user);
+                    // info command - print status
+                    printf("Connected device status:\n");
+                    printf("\tCard serial: ");
+                    print_card_serial(&status);
+                    printf("\tFirmware: v%d.%d\n",
+                           status.firmware_version_st.major,
+                           status.firmware_version_st.minor);
+                    if (res != RET_NO_PIN_ATTEMPTS) {
+                        printf("\tCard counters: Admin %d, User %d\n",
+                               status.retry_admin, status.retry_user);
+                    } else {
+                        printf("\tCard counters: PIN is not set - set PIN before the first use\n");
+                    }
                 }
                 res = RET_NO_ERROR;
             } break;

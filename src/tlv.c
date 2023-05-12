@@ -21,7 +21,9 @@
 
 #include "tlv.h"
 #include "ccid.h"
+#include "return_codes.h"
 #include "utils.h"
+#include <assert.h>
 #include <endian.h>
 #include <memory.h>
 #include <stdio.h>
@@ -32,14 +34,14 @@ int process_TLV(uint8_t *buf, const TLV *t) {
     switch (t->type) {
         case 'R':
         case 'S':
-            // encode string or data
+            // Encode String or Bytes
             buf[i++] = t->tag;
             buf[i++] = t->length;
             memmove(buf + i, t->v_str, t->length);
             i += t->length;
             break;
         case 'I':
-            // encode int BE u32
+            // Encode int BE u32
             buf[i++] = t->tag;
             buf[i++] = t->length;
             rassert(t->length == 4);
@@ -48,7 +50,7 @@ int process_TLV(uint8_t *buf, const TLV *t) {
             i += t->length;
             break;
         case 'B':
-            // raw bytes - copy buffer directly, without adding TL pair
+            // encode raw Bytes - copy buffer directly, without adding TL pair
             memmove(buf + i, t->v_data, t->length);
             i += t->length;
             break;
@@ -74,20 +76,23 @@ int process_all(uint8_t *buf, TLV *data, int count) {
     return idx;
 }
 
-TLV get_tlv(uint8_t *buf, size_t size, int tag) {
-    TLV result = {};
+int get_tlv(uint8_t *buf, size_t buf_size, int tag, TLV *out_TLV) {
+    rassert(buf != NULL);
+    rassert(out_TLV != NULL);
     size_t i = 0;
 
-    while (i < size) {
+    while (i < buf_size) {
         if (buf[i] == tag) {
-            result.tag = buf[i++];
-            result.length = buf[i++];
-            result.v_data = &buf[i];
-            return result;
+            out_TLV->tag = buf[i++];
+            out_TLV->length = buf[i++];
+            out_TLV->v_data = &buf[i];
+            // Return error, if the TLV length goes out of the buffer boundary
+            check_ret(((i + out_TLV->length) > buf_size), RET_COMM_ERROR);
+            return RET_SUCCESS;
         } else {
             i++;            // skip T
             i += 1 + buf[i];// skip L and V
         }
     }
-    return result;
+    return RET_NOT_FOUND;
 }

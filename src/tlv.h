@@ -39,6 +39,6 @@ typedef struct {
 } TLV;
 
 int process_all(uint8_t *buf, TLV data[], int count);
-TLV get_tlv(uint8_t *buf, size_t size, int tag);
+int get_tlv(uint8_t *buf, size_t buf_size, int tag, TLV *out_TLV);
 
 #endif// NITROKEY_HOTP_VERIFICATION_TLV_H

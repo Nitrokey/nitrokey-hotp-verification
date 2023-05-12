@@ -215,27 +215,49 @@ int verify_code_ccid(struct Device *dev, const uint32_t code_to_verify) {
     return RET_VALIDATION_PASSED;
 }
 
-int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *firmware_version) {
+int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *firmware_version, uint32_t *serial_number) {
+    rassert(handle != NULL);
     rassert(attempt_counter != NULL);
     rassert(firmware_version != NULL);
+    rassert(serial_number != NULL);
     uint8_t buf[1024] = {};
     IccResult iccResult = {};
     int r = send_select_ccid(handle, buf, sizeof buf, &iccResult);
-    if (r != RET_SUCCESS || iccResult.data_len == 0 || iccResult.data_status_code != 0x9000) {
+    if (r != RET_SUCCESS) {
         return r;
     }
-
-    TLV counter_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_PINCounter);
-    if (counter_tlv.tag != Tag_PINCounter) {
-        *attempt_counter = -1;
-        return RET_NO_PIN_ATTEMPTS;
+    if (iccResult.data_len == 0 || iccResult.data_status_code != 0x9000) {
+        return RET_COMM_ERROR;
     }
-    *attempt_counter = counter_tlv.v_data[0];
 
-    TLV version_tlv = get_tlv(iccResult.data, iccResult.data_len, Tag_Version);
-    if (version_tlv.tag != Tag_Version) {
+    TLV counter_tlv = {};
+    r = get_tlv(iccResult.data, iccResult.data_len, Tag_PINCounter, &counter_tlv);
+    if (!(r == RET_SUCCESS && counter_tlv.tag == Tag_PINCounter)) {
+        // PIN counter not found - comm error (ignore) or PIN not set
+        *attempt_counter = -1;
+    } else {
+        *attempt_counter = counter_tlv.v_data[0];
+    }
+
+    TLV serial_tlv = {};
+    r = get_tlv(iccResult.data, iccResult.data_len, Tag_SerialNumber, &serial_tlv);
+    if (r == RET_SUCCESS && serial_tlv.tag == Tag_SerialNumber) {
+        *serial_number = be32toh(*(uint32_t *) serial_tlv.v_data);
+    } else {
+        // ignore errors - unsupported or hidden serial_tlv number
+        *serial_number = 0;
+    }
+
+    TLV version_tlv = {};
+    r = get_tlv(iccResult.data, iccResult.data_len, Tag_Version, &version_tlv);
+    if (!(r == RET_SUCCESS && version_tlv.tag == Tag_Version)) {
+        *firmware_version = 0;
         return RET_COMM_ERROR;
     }
     *firmware_version = be16toh(*(uint16_t *) version_tlv.v_data);
+
+    if (*attempt_counter == -1) {
+        return RET_NO_PIN_ATTEMPTS;
+    }
     return RET_SUCCESS;
 }
