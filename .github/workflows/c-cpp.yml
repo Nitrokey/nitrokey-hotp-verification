@@ -7,11 +7,28 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
-
-    runs-on: fedora-latest
+  test:
+    name: fedora
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: make CI
-      run: make CI
+      - name: Setup Podman
+        run: |
+          sudo apt update
+          sudo apt-get -y install podman
+          podman pull fedora:38
+      - name: Get source
+        uses: actions/checkout@v3
+        with:
+          path: 'workdir'
+      - name: Create container and run tests
+        run: |
+          {
+              echo 'FROM fedora:38'
+              echo 'RUN dnf -y update'
+              echo 'RUN dnf -y install make gcc gcc-c++ git libusb1-devel cmake hidapi-devel meson libasan'
+              echo 'COPY workdir workdir'
+              echo 'WORKDIR /workdir'
+              echo 'RUN make CI'
+          } > podmanfile
+          podman build --tag fedora38 -f ./podmanfile
