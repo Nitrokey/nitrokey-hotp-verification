@@ -54,9 +54,8 @@ TEST_CASE("test ccid status", "[main]") {
     }
     REQUIRE((firmware_version != 0 && firmware_version != 0xFFFF));
     INFO("Current serial number " << serial);
-    // SN is unsupported currently by the Secrets App
-    // CHECK((serial != 0 && serial != 0xFFFFFFFF));
-    CHECK((serial == 0));
+    INFO("SN is supported by the Secrets App since 0.11");
+    REQUIRE((serial != 0 && serial != 0xFFFFFFFF));
 }
 
 TEST_CASE("test tlv", "[Helper]") {
