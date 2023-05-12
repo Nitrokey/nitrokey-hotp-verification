@@ -89,3 +89,15 @@ github_sha:
 format:
 	clang-format -i $(shell find src -type f | grep -v base32)
 	clang-format -i tests/test* ./test_ccid.cpp
+
+CI:
+	-dnf install -y make gcc gcc-c++ git libusb-devel cmake hidapi-devel meson
+	git submodule update --init --recursive
+	@echo "CMake"
+	mkdir -p ci-build-cmake
+	cd ci-build-cmake && cmake -DCMAKE_BUILD_TYPE=Release .. && make
+	@echo "Meson"
+	meson ci-build-meson && cd ci-build-meson && ninja
+	@echo "Make"
+	make
+	@echo "Finished"
