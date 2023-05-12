@@ -74,6 +74,14 @@ int main(int argc, char *argv[]) {
     return res;
 }
 
+void print_card_serial(struct ResponseStatus *status) {
+    if ((*status).card_serial_u32 != 0) {
+        printf("0x%X\n", (*status).card_serial_u32);
+    } else {
+        printf("N/A\n");
+    }
+}
+
 int parse_cmd_and_run(int argc, char *const *argv) {
     int res = RET_INVALID_PARAMS;
     if (argc > 1) {
@@ -88,22 +96,12 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 res = device_get_status(&dev, &status);
                 if (strnlen(argv[1], 10) == 2 && argv[1][1] == 'd') {
                     // id command - print ID only
-                    if (status.card_serial_u32 != 0){
-                        printf("0x%X\n", status.card_serial_u32);
-                    } else {
-                        printf("N/A\n");
-                    }
+                    print_card_serial(&status);
                 } else {
                     // info command - print status
                     printf("Connected device status:\n");
-
                     printf("\tCard serial: ");
-                    if (status.card_serial_u32 != 0) {
-                        printf("0x%X\n", status.card_serial_u32);
-                    } else {
-                        printf("N/A\n");
-                    }
-
+                    print_card_serial(&status);
                     printf("\tFirmware: v%d.%d\n",
                            status.firmware_version_st.major,
                            status.firmware_version_st.minor);
