@@ -27,11 +27,13 @@
 
 #define STRINGIFY_HELPER(X) #X
 #define STRINGIFY(X) STRINGIFY_HELPER(X)
+// Critical exit if condition is not true
 #define rassert(x)                                               \
     if (!(x)) {                                                  \
         printf("Critical assertion failed: " STRINGIFY(x) "\n"); \
         exit(1);                                                 \
     }
+// Return error code if condition is true, or X != 0 (where 0 is the typical success code)
 #define check_ret(x, ret)                          \
     if ((x) != 0) {                                \
         printf("Call failed: " STRINGIFY(x) "\n"); \

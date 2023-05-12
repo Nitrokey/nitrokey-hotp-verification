@@ -9,6 +9,7 @@ extern "C" {
 #include "src/return_codes.h"
 }
 
+// Multple TLV entities
 TLV data[] = {
         {.tag = 0x71,
          .length = 6,
@@ -20,6 +21,23 @@ TLV data[] = {
          .v_str = "789012"},
 };
 
+// Encode tag length longer, than the actual data
+TLV data_invalid[] = {
+        {.tag = 0x71,
+         .length = 80,
+         .type = 'S',
+         .v_str = "123456"},
+
+};
+
+// Single TLV entity
+TLV data_valid[] = {
+        {.tag = 0x71,
+         .length = 6,
+         .type = 'S',
+         .v_str = "123456"},
+
+};
 
 TEST_CASE("test ccid status", "[main]") {
     struct Device dev = {};
@@ -50,4 +68,20 @@ TEST_CASE("test tlv", "[Helper]") {
     REQUIRE(buf[2 + data[0].length] == data[1].tag);
     REQUIRE(buf[2 + data[0].length + 1] == data[1].length);
     std::cout << buf;
+}
+
+TEST_CASE("test tlv invalid", "[Helper]") {
+    uint8_t buf[8] = {};
+    process_all(buf, data_invalid, sizeof data_invalid / sizeof data_invalid[0]);
+    TLV tlv = {};
+    int r = get_tlv(buf, sizeof buf, 0x71, &tlv);
+    REQUIRE(r == RET_COMM_ERROR);
+}
+
+TEST_CASE("test tlv valid", "[Helper]") {
+    uint8_t buf[8] = {};
+    process_all(buf, data_valid, sizeof data_valid / sizeof data_valid[0]);
+    TLV tlv = {};
+    int r = get_tlv(buf, sizeof buf, 0x71, &tlv);
+    REQUIRE(r == RET_SUCCESS);
 }
