@@ -37,7 +37,7 @@ static const int READ_ENDPOINT = 0x81;
 
 static const int WRITE_ENDPOINT = 0x01;
 
-static const int TIMEOUT = 1000;
+static const int TIMEOUT = 2*1000;
 
 
 uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, size_t data_len, uint8_t slot, uint8_t seq, uint16_t param, uint8_t *data) {
@@ -373,16 +373,18 @@ int ccid_init(libusb_device_handle *handle) {
 
     const unsigned char *data_to_send[] = {
             cmd_select,
+            cmd_select,
             //            cmd_poweron,
-            //            cmd_poweroff,
-            //            cmd_info,
+            //                        cmd_poweroff,
+            //                        cmd_info,
     };
 
     const unsigned int data_to_send_size[] = {
             sizeof(cmd_select),
+            sizeof(cmd_select),
             //            sizeof(cmd_poweron),
-            //            sizeof(cmd_poweroff),
-            //            sizeof(cmd_info),
+            //                        sizeof(cmd_poweroff),
+            //                        sizeof(cmd_info),
     };
 
     unsigned char buf[MAX_CCID_BUFFER_SIZE] = {};
