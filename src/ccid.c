@@ -373,16 +373,16 @@ int ccid_init(libusb_device_handle *handle) {
 
     const unsigned char *data_to_send[] = {
             cmd_select,
-            cmd_poweron,
-            cmd_poweroff,
-            cmd_info,
+            //            cmd_poweron,
+            //            cmd_poweroff,
+            //            cmd_info,
     };
 
     const unsigned int data_to_send_size[] = {
             sizeof(cmd_select),
-            sizeof(cmd_poweron),
-            sizeof(cmd_poweroff),
-            sizeof(cmd_info),
+            //            sizeof(cmd_poweron),
+            //            sizeof(cmd_poweroff),
+            //            sizeof(cmd_info),
     };
 
     unsigned char buf[MAX_CCID_BUFFER_SIZE] = {};
