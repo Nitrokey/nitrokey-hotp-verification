@@ -27,6 +27,7 @@ const char *res_to_error_string(int res) {
     if (res == dev_unknown_command) return "Device is not supporting HOTP validation";
     if (res == RET_VALIDATION_PASSED) return "HOTP code is correct";
     if (res == RET_NO_ERROR) return "Operation success";
+    if (res == RET_SUCCESS) return "Operation success";
     if (res == RET_VALIDATION_FAILED) return "HOTP code is incorrect";
     if (res == RET_INVALID_PARAMS) return "Invalid command, incorrect arguments count or format";
     if (res == RET_BADLY_FORMATTED_BASE32_STRING) return "Invalid base32 string";
@@ -35,7 +36,7 @@ const char *res_to_error_string(int res) {
     if (res == RET_CONNECTION_LOST) return "Connection to the device was lost during the process";
     if (res == RET_COMM_ERROR) return "Connection error occurred";
     if (res == RET_UNKNOWN_DEVICE) return "Current device is not supported or known";
-    if (res == RET_NO_PIN_ATTEMPTS) return "There are no PIN attempts left";
+    if (res == RET_NO_PIN_ATTEMPTS) return "Device does not show PIN attempts counter";
     if (res == RET_SLOT_NOT_CONFIGURED) return "HOTP slot is not configured";
     if (res == RET_SECURITY_STATUS_NOT_SATISFIED) return "Touch was not recognized, or there was other problem with the authentication";
     return "Unknown error";
