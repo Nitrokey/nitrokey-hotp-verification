@@ -96,7 +96,7 @@ int authenticate_ccid(struct Device *dev, const char *admin_PIN) {
         return 1;
     }
 
-    return RET_SUCCESS;
+    return RET_NO_ERROR;
 }
 
 
@@ -223,7 +223,7 @@ int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *fi
     uint8_t buf[1024] = {};
     IccResult iccResult = {};
     int r = send_select_ccid(handle, buf, sizeof buf, &iccResult);
-    if (r != RET_SUCCESS) {
+    if (r != RET_NO_ERROR) {
         return r;
     }
     if (iccResult.data_len == 0 || iccResult.data_status_code != 0x9000) {
@@ -232,7 +232,7 @@ int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *fi
 
     TLV counter_tlv = {};
     r = get_tlv(iccResult.data, iccResult.data_len, Tag_PINCounter, &counter_tlv);
-    if (!(r == RET_SUCCESS && counter_tlv.tag == Tag_PINCounter)) {
+    if (!(r == RET_NO_ERROR && counter_tlv.tag == Tag_PINCounter)) {
         // PIN counter not found - comm error (ignore) or PIN not set
         *attempt_counter = -1;
     } else {
@@ -241,7 +241,7 @@ int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *fi
 
     TLV serial_tlv = {};
     r = get_tlv(iccResult.data, iccResult.data_len, Tag_SerialNumber, &serial_tlv);
-    if (r == RET_SUCCESS && serial_tlv.tag == Tag_SerialNumber) {
+    if (r == RET_NO_ERROR && serial_tlv.tag == Tag_SerialNumber) {
         *serial_number = be32toh(*(uint32_t *) serial_tlv.v_data);
     } else {
         // ignore errors - unsupported or hidden serial_tlv number
@@ -250,7 +250,7 @@ int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *fi
 
     TLV version_tlv = {};
     r = get_tlv(iccResult.data, iccResult.data_len, Tag_Version, &version_tlv);
-    if (!(r == RET_SUCCESS && version_tlv.tag == Tag_Version)) {
+    if (!(r == RET_NO_ERROR && version_tlv.tag == Tag_Version)) {
         *firmware_version = 0;
         return RET_COMM_ERROR;
     }
@@ -259,5 +259,5 @@ int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *fi
     if (*attempt_counter == -1) {
         return RET_NO_PIN_ATTEMPTS;
     }
-    return RET_SUCCESS;
+    return RET_NO_ERROR;
 }

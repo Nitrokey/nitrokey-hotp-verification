@@ -301,7 +301,7 @@ int send_select_ccid(libusb_device_handle *handle, uint8_t buf[], size_t buf_siz
             RET_COMM_ERROR);
 
 
-    return RET_SUCCESS;
+    return RET_NO_ERROR;
 }
 
 

@@ -95,7 +95,7 @@ int parse_cmd_and_run(int argc, char *const *argv) {
             case 'i': {
                 struct ResponseStatus status;
                 res = device_get_status(&dev, &status);
-                check_ret((res != RET_SUCCESS) && (res != RET_NO_PIN_ATTEMPTS), res);
+                check_ret((res != RET_NO_ERROR) && (res != RET_NO_PIN_ATTEMPTS), res);
                 if (strnlen(argv[1], 10) == 2 && argv[1][1] == 'd') {
                     // id command - print ID only
                     print_card_serial(&status);
@@ -116,7 +116,7 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 }
                 if (res == RET_NO_PIN_ATTEMPTS) {
                     // Ignore if PIN is not set here
-                    res = RET_SUCCESS;
+                    res = RET_NO_ERROR;
                 }
             } break;
             case 'c':

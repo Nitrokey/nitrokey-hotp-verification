@@ -88,7 +88,7 @@ int get_tlv(uint8_t *buf, size_t buf_size, int tag, TLV *out_TLV) {
             out_TLV->v_data = &buf[i];
             // Return error, if the TLV length goes out of the buffer boundary
             check_ret(((i + out_TLV->length) > buf_size), RET_COMM_ERROR);
-            return RET_SUCCESS;
+            return RET_NO_ERROR;
         } else {
             i++;            // skip T
             i += 1 + buf[i];// skip L and V

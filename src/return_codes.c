@@ -27,7 +27,6 @@ const char *res_to_error_string(int res) {
     if (res == dev_unknown_command) return "Device is not supporting HOTP validation";
     if (res == RET_VALIDATION_PASSED) return "HOTP code is correct";
     if (res == RET_NO_ERROR) return "Operation success";
-    if (res == RET_SUCCESS) return "Operation success";
     if (res == RET_VALIDATION_FAILED) return "HOTP code is incorrect";
     if (res == RET_INVALID_PARAMS) return "Invalid command, incorrect arguments count or format";
     if (res == RET_BADLY_FORMATTED_BASE32_STRING) return "Invalid base32 string";

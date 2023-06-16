@@ -280,7 +280,7 @@ int device_get_status(struct Device *dev, struct ResponseStatus *out_status) {
     struct ResponseStatus *status = (struct ResponseStatus *) dev->packet_response.response_st.payload;
     status->retry_admin = retry_admin;
     status->retry_user = retry_user;
-    return RET_SUCCESS;
+    return RET_NO_ERROR;
 }
 
 
