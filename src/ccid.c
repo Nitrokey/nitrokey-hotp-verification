@@ -239,7 +239,7 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer,
                 continue;
             default:
                 printf("Invalid value for chain: %d\n", iccResult.chain);
-                return 1;
+                return RET_COMM_ERROR;
         }
     }
     return 0;
@@ -414,7 +414,7 @@ int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char
     int r = libusb_bulk_transfer(device, READ_ENDPOINT, returned_data, _buffer_length, actual_length, TIMEOUT);
     if (r < 0) {
         LOG("Error reading data: %s\n", libusb_strerror(r));
-        return 1;
+        return RET_COMM_ERROR;
     }
     print_buffer(returned_data, (*actual_length), "recv");
     return 0;
@@ -424,8 +424,8 @@ int ccid_send(libusb_device_handle *device, int *actual_length, const unsigned c
     print_buffer(data, length, "sending");
     int r = libusb_bulk_transfer(device, WRITE_ENDPOINT, (uint8_t *) data, (int) length, actual_length, TIMEOUT);
     if (r < 0) {
-        printf("Error sending data: %s\n", libusb_strerror(r));
-        return 1;
+        LOG("Error sending data: %s\n", libusb_strerror(r));
+        return RET_COMM_ERROR;
     }
     return 0;
 }
