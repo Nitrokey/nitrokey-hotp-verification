@@ -30,6 +30,7 @@ src = [
 'src/base32.c',
 'src/random_data.c',
 'src/min.c',
+'src/utils.c',
 version_cc,
 'src/return_codes.c',
 'src/main.c',

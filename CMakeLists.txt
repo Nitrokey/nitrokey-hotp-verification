@@ -35,7 +35,7 @@ ENDIF()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/version.c.in ${CMAKE_CURRENT_SOURCE_DIR}/src/version.c @ONLY)
 
 set(SOURCE_FILES
-        src/structs.h src/crc32.c src/crc32.h src/device.c src/device.h src/operations.c src/operations.h src/dev_commands.c src/dev_commands.h src/base32.c src/base32.h src/command_id.h src/random_data.c src/random_data.h src/min.c src/min.h src/settings.h src/version.h src/version.c src/return_codes.h src/return_codes.c src/ccid.h src/ccid.c src/tlv.c src/tlv.h src/operations_ccid.c src/operations_ccid.h src/utils.h
+        src/structs.h src/crc32.c src/crc32.h src/device.c src/device.h src/operations.c src/operations.h src/dev_commands.c src/dev_commands.h src/base32.c src/base32.h src/command_id.h src/random_data.c src/random_data.h src/min.c src/min.h src/settings.h src/version.h src/version.c src/return_codes.h src/return_codes.c src/ccid.h src/ccid.c src/tlv.c src/tlv.h src/operations_ccid.c src/operations_ccid.h src/utils.h src/utils.c
         )
 
 add_library(nitrokey_hotp_verification_core STATIC ${SOURCE_FILES})

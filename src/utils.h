@@ -50,5 +50,8 @@
     } while (0)
 #endif
 
+int64_t stopwatch_stop();
+void stopwatch_start();
+
 
 #endif//NITROKEY_HOTP_VERIFICATION_UTILS_H

@@ -171,7 +171,7 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer,
 
     int prev_status = 0;
     while (true) {
-        usleep(10*1000);
+        usleep(10 * 1000);
         r = ccid_receive(handle, &actual_length, receiving_buffer, receiving_buffer_length);
         if (r != 0) {
             return r;
@@ -415,7 +415,9 @@ uint32_t icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV *tlvs, int t
 
 int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char *returned_data, size_t buffer_length) {
     int32_t _buffer_length = MIN(buffer_length, INT32_MAX);
+    stopwatch_start();
     int r = libusb_bulk_transfer(device, READ_ENDPOINT, returned_data, _buffer_length, actual_length, TIMEOUT);
+    LOG("*** Time for %s: %ld\n", __FUNCTION__, stopwatch_stop());
     if (r < 0) {
         LOG("Error reading data: %s\n", libusb_strerror(r));
         return RET_COMM_ERROR;
@@ -426,7 +428,9 @@ int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char
 
 int ccid_send(libusb_device_handle *device, int *actual_length, const unsigned char *data, const size_t length) {
     print_buffer(data, length, "sending");
+    stopwatch_start();
     int r = libusb_bulk_transfer(device, WRITE_ENDPOINT, (uint8_t *) data, (int) length, actual_length, TIMEOUT);
+    LOG("*** Time for %s: %ld\n", __FUNCTION__, stopwatch_stop());
     if (r < 0) {
         LOG("Error sending data: %s\n", libusb_strerror(r));
         return RET_COMM_ERROR;
