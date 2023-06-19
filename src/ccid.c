@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
+#include <unistd.h>
 
 static const int READ_ENDPOINT = 0x81;
 
@@ -170,6 +171,7 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer,
 
     int prev_status = 0;
     while (true) {
+        usleep(10*1000);
         r = ccid_receive(handle, &actual_length, receiving_buffer, receiving_buffer_length);
         if (r != 0) {
             return r;
