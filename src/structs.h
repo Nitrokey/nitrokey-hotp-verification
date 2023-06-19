@@ -44,7 +44,7 @@ struct DeviceQuery {
             uint8_t command_id;
             uint8_t payload[HID_REPORT_SIZE - 6];
             uint32_t crc;
-        };
+        } __packed;
         uint8_t as_data[HID_REPORT_SIZE];
     };
 } __packed;
@@ -67,6 +67,7 @@ struct DeviceResponse_st {
     uint32_t last_command_crc;
     uint8_t last_command_status;
 
+
     union {
         uint8_t payload[HID_REPORT_SIZE - wrapping_size];
         struct {
@@ -78,14 +79,14 @@ struct DeviceResponse_st {
         } __packed storage_status;
     } __packed;
     uint32_t crc;
-};
+} __packed;
 
 struct DeviceResponse {
     union {
         struct DeviceResponse_st response_st;
         uint8_t as_data[HID_REPORT_SIZE];
-    };
-};
+    } __packed;
+} __packed;
 
 //------------------------------------
 
@@ -96,7 +97,7 @@ struct ResponseStatus {
             uint8_t minor;
             uint8_t major;
         } firmware_version_st;
-    };
+    } __packed;
     union {
         uint8_t card_serial[4];
         uint32_t card_serial_u32;
@@ -200,6 +201,57 @@ struct cmd_createNewKeys_Storage {
     uint8_t kind;// should be set to 'P'
     uint8_t admin_password[30];
 } __packed;
+
+
+struct StatusResponsePayloadStorage {
+    uint16_t MagicNumber_StickConfig_u16;//2
+    /**
+                   * READ_WRITE_ACTIVE = ReadWriteFlagUncryptedVolume_u8 == 0;
+                   */
+    uint8_t ReadWriteFlagUncryptedVolume_u8;//3
+    uint8_t ReadWriteFlagCryptedVolume_u8;  //4
+
+    union {
+        uint8_t VersionInfo_au8[4];
+        struct {
+            uint8_t major;
+            uint8_t minor;
+            uint8_t _reserved2;
+            uint8_t build_iteration;
+        } __packed versionInfo;
+    } __packed;//8
+
+    uint8_t ReadWriteFlagHiddenVolume_u8;
+    uint8_t FirmwareLocked_u8;//10
+
+    union {
+        uint8_t NewSDCardFound_u8;
+        struct {
+            bool NewCard : 1;
+            uint8_t Counter : 7;
+        } __packed NewSDCardFound_st;
+    } __packed;//11
+
+    /**
+                     * SD card FILLED with random chars
+                     */
+    uint8_t SDFillWithRandomChars_u8;//12
+    uint32_t ActiveSD_CardID_u32;    //16
+    union {
+        uint8_t VolumeActiceFlag_u8;
+        struct {
+            bool unencrypted : 1;
+            bool encrypted : 1;
+            bool hidden : 1;
+        } __packed VolumeActiceFlag_st;
+    } __packed;                    //17
+    uint8_t NewSmartCardFound_u8;  //18
+    uint8_t UserPwRetryCount;      //19
+    uint8_t AdminPwRetryCount;     //20
+    uint32_t ActiveSmartCardID_u32;//24
+    uint8_t StickKeysNotInitiated; //25
+} __packed;
+
 
 #pragma pack(pop)
 #endif// NITROKEY_HOTP_VERIFICATION_STRUCTS_H

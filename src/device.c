@@ -49,9 +49,9 @@ void _dump(uint8_t *data, size_t datalen) {
         return;
     }
     for (size_t i = 0; i < datalen; ++i) {
-        if (i%16 == 0){
+        if (i % 16 == 0) {
             printf("\n%02lx: ", i);
-        } else if (i%8 == 0){
+        } else if (i % 8 == 0) {
             printf(" ");
         }
         printf("%02x ", data[i]);
@@ -95,9 +95,9 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
 
         receive_status = (hid_get_feature_report(dev->mp_devhandle, dev->packet_response.as_data, HID_REPORT_SIZE_CONST));
         if (receive_status != (int) HID_REPORT_SIZE_CONST) continue;
-        dump(dev->packet_response.as_data, receive_status);
-        bool valid_response_crc = stm_crc32(dev->packet_response.as_data + 1, HID_REPORT_SIZE_CONST - 5) == dev->packet_response.response_st.crc;
-        bool valid_query_crc = dev->packet_query.crc == dev->packet_response.response_st.last_command_crc;
+        dump((dev->packet_response.as_data + 1), receive_status - 1);
+        const bool valid_response_crc = stm_crc32(dev->packet_response.as_data + 1, HID_REPORT_SIZE_CONST - 5) == dev->packet_response.response_st.crc;
+        const bool valid_query_crc = dev->packet_query.crc == dev->packet_response.response_st.last_command_crc;
         if (valid_response_crc && valid_query_crc && dev->packet_response.response_st.device_status == 0) {
             break;
         }
@@ -109,7 +109,7 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
 
     if (out_data != nullptr) {
         rassert(out_buffer_size != 0);
-        memcpy(out_data, dev->packet_query.as_data + 1, min(out_buffer_size, HID_REPORT_SIZE_CONST - 1));
+        memcpy(out_data, dev->packet_response.as_data + 1, min(out_buffer_size, HID_REPORT_SIZE_CONST - 1));
         if (out_buffer_size > HID_REPORT_SIZE_CONST - 1) {
             printf("WARN %s:%d: incoming data bigger than provided output buffer.\n", "device.c", __LINE__);
         }
@@ -138,7 +138,7 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
     }
 
     dev->packet_query.crc = stm_crc32(dev->packet_query.as_data + 1, HID_REPORT_SIZE_CONST - 5);
-    dump(dev->packet_query.as_data, HID_REPORT_SIZE_CONST);
+    dump((dev->packet_query.as_data + 1), HID_REPORT_SIZE_CONST - 1);
     int send_status = hid_send_feature_report(dev->mp_devhandle, dev->packet_query.as_data, HID_REPORT_SIZE_CONST);
 
     if (send_status != (int) HID_REPORT_SIZE_CONST) {
@@ -256,6 +256,10 @@ int device_receive_buf(struct Device *dev) {
 #include "operations_ccid.h"
 
 int device_get_status(struct Device *dev, struct ResponseStatus *out_status) {
+    assert(out_status != NULL);
+    assert(dev != NULL);
+    memset(out_status, 0, sizeof(struct ResponseStatus));
+
     if (dev->connection_type == CONNECTION_CCID) {
         int counter = 0;
         uint32_t serial = 0;
@@ -282,9 +286,20 @@ int device_get_status(struct Device *dev, struct ResponseStatus *out_status) {
 
     device_send_buf(dev, GET_STATUS);
     device_receive_buf(dev);
-    struct ResponseStatus *status = (struct ResponseStatus *) dev->packet_response.response_st.payload;
-    status->retry_admin = retry_admin;
-    status->retry_user = retry_user;
+    *out_status = *(struct ResponseStatus *) dev->packet_response.response_st.payload;
+
+    if (out_status->firmware_version_st.minor == 1) {
+        device_send_buf(dev, GET_DEVICE_STATUS);
+        device_receive_buf(dev);
+
+        struct StatusResponsePayloadStorage *status = (struct StatusResponsePayloadStorage *) (dev->packet_response.response_st.payload + 22);
+        out_status->card_serial_u32 = status->ActiveSmartCardID_u32;
+        out_status->firmware_version_st.major = status->versionInfo.major;
+        out_status->firmware_version_st.minor = status->versionInfo.minor;
+    }
+
+    out_status->retry_admin = retry_admin;
+    out_status->retry_user = retry_user;
     return RET_NO_ERROR;
 }
 
