@@ -49,6 +49,11 @@ void _dump(uint8_t *data, size_t datalen) {
         return;
     }
     for (size_t i = 0; i < datalen; ++i) {
+        if (i%16 == 0){
+            printf("\n%02lx: ", i);
+        } else if (i%8 == 0){
+            printf(" ");
+        }
         printf("%02x ", data[i]);
     }
     printf("\n");
