@@ -5,14 +5,21 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-guess-branch-probability -Wdate-time -frandom-seed=device.c -O0")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gno-record-gcc-switches ")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG ")  #comment out to show debug output
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdebug-prefix-map=${CMAKE_CURRENT_BINARY_DIR}=heads")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS}")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 SET(CMAKE_EXE_LINKER_FLAGS  "-O1 -fsanitize=address")
 
 set(GIT_VERSION_PLACEHOLDER "no-git-version")
+
+OPTION(ADD_LOG "Print debug information to stdout" FALSE)
+IF(NOT(ADD_LOG))
+    message("Removing debug prints. Use ADD_LOG option to enable them.")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG ")
+ELSE ()
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
+    message("Debug prints enabled.")
+ENDIF ()
 
 OPTION(ADD_GIT_INFO "Add information about source code version from Git repository" TRUE)
 IF(ADD_GIT_INFO)

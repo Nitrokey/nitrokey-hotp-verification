@@ -35,6 +35,9 @@ $ cmake -LH ..
 // Add information about source code version from Git repository
 ADD_GIT_INFO:BOOL=ON
 
+// Print debug information to stdout
+ADD_LOG:BOOL=OFF
+
 // Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.
 CMAKE_BUILD_TYPE:STRING=Debug
 
@@ -210,7 +213,8 @@ make -f Makefile-repro.mk repro-build
 make -f Makefile-repro.mk repro-run
 ```
 
-
+## Development
+When `NDEBUG` is set, the log messages are not printed out.
 
 ## License
 Code is licensed under GPLv3, excluding `base32.{h,c}` files. The latter are downloaded from [tpmtopt](https://github.com/osresearch/tpmtotp) project and seem to be licensed under [MIT](https://choosealicense.com/licenses/mit/) license.
