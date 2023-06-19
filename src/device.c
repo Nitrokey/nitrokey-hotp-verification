@@ -91,7 +91,8 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
         fprintf(stderr, ".");
         fflush(stderr);
 #endif
-        usleep(500 * 1000);
+        // keep this 200ms for Nitrokey Storage, to stabilize its responses (otherwise it sometimes returns with no data)
+        usleep(200 * 1000);
 
         receive_status = (hid_get_feature_report(dev->mp_devhandle, dev->packet_response.as_data, HID_REPORT_SIZE_CONST));
         if (receive_status != (int) HID_REPORT_SIZE_CONST) continue;
