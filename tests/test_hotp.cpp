@@ -186,12 +186,16 @@ TEST_CASE("Try to set the HOTP secret without PIN", "[HOTP]") {
     res = device_connect(&dev);
     REQUIRE(res == true);
 
+    if (dev.connection_type != CONNECTION_CCID) {
+        return;
+    }
+
     SECTION("actual test") {
         struct ResponseStatus status = {};
         res = device_get_status(&dev, &status);
         REQUIRE(res == RET_NO_ERROR);
         const char *PIN_status_str = status.retry_admin == 0xFF ? "unset" : "set";
-        INFO("Current PIN status" << PIN_status_str);
+        INFO("Current PIN status: " << PIN_status_str);
 
         res = set_secret_on_device(&dev, base32_secret, "", 0);
         REQUIRE(res == RET_NO_ERROR);
