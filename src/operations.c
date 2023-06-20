@@ -52,6 +52,9 @@ bool verify_base32(const char *string, size_t len) {
 }
 
 int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, const char *admin_PIN, const uint64_t hotp_counter) {
+    rassert(OTP_secret_base32 != nullptr);
+    rassert(dev != nullptr);
+    rassert(admin_PIN != nullptr);
     int res;
     //Make sure secret is parsable
     const size_t base32_string_length_limit = BASE32_LEN(HOTP_SECRET_SIZE_BYTES);
@@ -102,7 +105,7 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
            min(sizeof(otpData_name.temporary_admin_password), sizeof(dev->admin_temporary_password)));
     otpData_name.type = 'N';
     otpData_name.id = 0;
-    memcpy(otpData_name.data, HOTP_SLOT_NAME, strnlen(HOTP_SLOT_NAME, sizeof(otpData_name.data)));
+    memcpy(otpData_name.data, HOTP_SLOT_NAME, SLOT_NAME_LEN);
     res = device_send(dev, (uint8_t *) &otpData_name, sizeof(otpData_name), SEND_OTP_DATA);
     if (res != RET_NO_ERROR) return res;
     res = device_receive_buf(dev);

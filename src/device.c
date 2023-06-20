@@ -49,6 +49,11 @@ void _dump(uint8_t *data, size_t datalen) {
         return;
     }
     for (size_t i = 0; i < datalen; ++i) {
+        if (i % 16 == 0) {
+            printf("\n%02lx: ", i);
+        } else if (i % 8 == 0) {
+            printf(" ");
+        }
         printf("%02x ", data[i]);
     }
     printf("\n");
@@ -78,7 +83,7 @@ static const int CONNECTION_ATTEMPTS_COUNT = 2;
 static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000 * 1000 / 2;
 
 int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size) {
-    const int receive_attempts = 10;
+    const int receive_attempts = 40;
     int i;
     int receive_status = 0;
     for (i = 0; i < receive_attempts; ++i) {
@@ -86,13 +91,14 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
         fprintf(stderr, ".");
         fflush(stderr);
 #endif
-        usleep(500 * 1000);
+        // keep this 200ms for Nitrokey Storage, to stabilize its responses (otherwise it sometimes returns with no data)
+        usleep(200 * 1000);
 
         receive_status = (hid_get_feature_report(dev->mp_devhandle, dev->packet_response.as_data, HID_REPORT_SIZE_CONST));
         if (receive_status != (int) HID_REPORT_SIZE_CONST) continue;
-        dump(dev->packet_response.as_data, receive_status);
-        bool valid_response_crc = stm_crc32(dev->packet_response.as_data + 1, HID_REPORT_SIZE_CONST - 5) == dev->packet_response.response_st.crc;
-        bool valid_query_crc = dev->packet_query.crc == dev->packet_response.response_st.last_command_crc;
+        dump((dev->packet_response.as_data + 1), receive_status - 1);
+        const bool valid_response_crc = stm_crc32(dev->packet_response.as_data + 1, HID_REPORT_SIZE_CONST - 5) == dev->packet_response.response_st.crc;
+        const bool valid_query_crc = dev->packet_query.crc == dev->packet_response.response_st.last_command_crc;
         if (valid_response_crc && valid_query_crc && dev->packet_response.response_st.device_status == 0) {
             break;
         }
@@ -104,7 +110,7 @@ int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size
 
     if (out_data != nullptr) {
         rassert(out_buffer_size != 0);
-        memcpy(out_data, dev->packet_query.as_data + 1, min(out_buffer_size, HID_REPORT_SIZE_CONST - 1));
+        memcpy(out_data, dev->packet_response.as_data + 1, min(out_buffer_size, HID_REPORT_SIZE_CONST - 1));
         if (out_buffer_size > HID_REPORT_SIZE_CONST - 1) {
             printf("WARN %s:%d: incoming data bigger than provided output buffer.\n", "device.c", __LINE__);
         }
@@ -133,7 +139,7 @@ int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t 
     }
 
     dev->packet_query.crc = stm_crc32(dev->packet_query.as_data + 1, HID_REPORT_SIZE_CONST - 5);
-    dump(dev->packet_query.as_data, HID_REPORT_SIZE_CONST);
+    dump((dev->packet_query.as_data + 1), HID_REPORT_SIZE_CONST - 1);
     int send_status = hid_send_feature_report(dev->mp_devhandle, dev->packet_query.as_data, HID_REPORT_SIZE_CONST);
 
     if (send_status != (int) HID_REPORT_SIZE_CONST) {
@@ -151,19 +157,19 @@ int device_connect_ccid(struct Device *dev) {
     int r = libusb_init(&dev->ctx_ccid);
     if (r < 0) {
         printf("Error initializing libusb: %s\n", libusb_strerror(r));
-        return false;
+        return RET_COMM_ERROR;
     }
     dev->mp_devhandle_ccid = get_device(dev->ctx_ccid, devices_ccid, 1);
     if (dev->mp_devhandle_ccid == NULL) {
-        return false;
+        return RET_COMM_ERROR;
     }
     ccid_init(dev->mp_devhandle_ccid);
 
-    return true;
+    return RET_NO_ERROR;
 }
 int device_connect(struct Device *dev) {
     int r = device_connect_hid(dev);
-    if (r) {
+    if (r == RET_NO_ERROR) {
         dev->connection_type = CONNECTION_HID;
         fprintf(stderr, "\n");
         fflush(stderr);
@@ -174,7 +180,7 @@ int device_connect(struct Device *dev) {
     fflush(stderr);
     fprintf(stderr, ".");
     r = device_connect_ccid(dev);
-    if (r) {
+    if (r == RET_NO_ERROR) {
         dev->connection_type = CONNECTION_CCID;
         fprintf(stderr, "\n");
         fflush(stderr);
@@ -183,14 +189,14 @@ int device_connect(struct Device *dev) {
 #endif
 
     fprintf(stderr, "\n");
-    return false;
+    return RET_COMM_ERROR;
 }
 
 int device_connect_hid(struct Device *dev) {
     int count = CONNECTION_ATTEMPTS_COUNT;
 
-    if (dev->mp_devhandle != nullptr)
-        return 1;
+    // Abort if device seem to be initialized
+    rassert(dev->mp_devhandle == nullptr);
 
     while (count-- > 0) {
         for (size_t dev_id = 0; dev_id < devices_size; ++dev_id) {
@@ -198,7 +204,7 @@ int device_connect_hid(struct Device *dev) {
             dev->mp_devhandle = hid_open(vidPid.vid, vidPid.pid, nullptr);
             if (dev->mp_devhandle != nullptr) {
                 dev->dev_info = vidPid;
-                return true;
+                return RET_NO_ERROR;
             }
             usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
         }
@@ -209,7 +215,7 @@ int device_connect_hid(struct Device *dev) {
         fflush(stderr);
     }
 
-    return false;
+    return RET_COMM_ERROR;
 }
 
 int device_disconnect(struct Device *dev) {
@@ -218,14 +224,17 @@ int device_disconnect(struct Device *dev) {
         libusb_release_interface(dev->mp_devhandle_ccid, 0);
         libusb_close(dev->mp_devhandle_ccid);
         libusb_exit(dev->ctx_ccid);
+        dev->mp_devhandle_ccid = nullptr;
         device_clear_buffers(dev);
+        dev->connection_type = CONNECTION_UNKNOWN;
         return RET_NO_ERROR;
     } else if (dev->connection_type == CONNECTION_HID) {
         if (dev->mp_devhandle == nullptr) return 1;//TODO name error value
         hid_close(dev->mp_devhandle);
+        hid_exit();
         dev->mp_devhandle = nullptr;
         device_clear_buffers(dev);
-        hid_exit();
+        dev->connection_type = CONNECTION_UNKNOWN;
         return RET_NO_ERROR;
     }
     return RET_UNKNOWN_DEVICE;
@@ -251,6 +260,10 @@ int device_receive_buf(struct Device *dev) {
 #include "operations_ccid.h"
 
 int device_get_status(struct Device *dev, struct ResponseStatus *out_status) {
+    assert(out_status != NULL);
+    assert(dev != NULL);
+    memset(out_status, 0, sizeof(struct ResponseStatus));
+
     if (dev->connection_type == CONNECTION_CCID) {
         int counter = 0;
         uint32_t serial = 0;
@@ -277,10 +290,26 @@ int device_get_status(struct Device *dev, struct ResponseStatus *out_status) {
 
     device_send_buf(dev, GET_STATUS);
     device_receive_buf(dev);
-    struct ResponseStatus *status = (struct ResponseStatus *) dev->packet_response.response_st.payload;
-    status->retry_admin = retry_admin;
-    status->retry_user = retry_user;
-    return RET_SUCCESS;
+    *out_status = *(struct ResponseStatus *) dev->packet_response.response_st.payload;
+
+    if (out_status->firmware_version_st.minor == 1) {
+        for (int i = 0; i < 100; ++i) {
+            device_send_buf(dev, GET_DEVICE_STATUS);
+            device_receive_buf(dev);
+
+            struct StatusResponsePayloadStorage *status = (struct StatusResponsePayloadStorage *) (dev->packet_response.response_st.payload + 22);
+            out_status->card_serial_u32 = status->ActiveSmartCardID_u32;
+            out_status->firmware_version_st.major = status->versionInfo.major;
+            out_status->firmware_version_st.minor = status->versionInfo.minor;
+            if (out_status->card_serial_u32 != 0) {
+                break;
+            }
+        }
+    }
+
+    out_status->retry_admin = retry_admin;
+    out_status->retry_user = retry_user;
+    return RET_NO_ERROR;
 }
 
 

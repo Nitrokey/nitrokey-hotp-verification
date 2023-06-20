@@ -41,13 +41,13 @@ TLV data_valid[] = {
 
 TEST_CASE("test ccid status", "[main]") {
     struct Device dev = {};
-    bool res = device_connect(&dev);
-    REQUIRE(res);
+    int res = device_connect(&dev);
+    REQUIRE(res == RET_NO_ERROR);
     int counter;
     uint16_t firmware_version;
     uint32_t serial;
     int status_res = status_ccid(dev.mp_devhandle_ccid, &counter, &firmware_version, &serial);
-    if (status_res == RET_SUCCESS) {
+    if (status_res == RET_NO_ERROR) {
         REQUIRE((0 <= counter && counter <= 8));
     } else if (status_res == RET_NO_PIN_ATTEMPTS) {
         REQUIRE(counter == -1);
@@ -82,5 +82,5 @@ TEST_CASE("test tlv valid", "[Helper]") {
     process_all(buf, data_valid, sizeof data_valid / sizeof data_valid[0]);
     TLV tlv = {};
     int r = get_tlv(buf, sizeof buf, 0x71, &tlv);
-    REQUIRE(r == RET_SUCCESS);
+    REQUIRE(r == RET_NO_ERROR);
 }

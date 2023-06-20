@@ -25,7 +25,6 @@
 
 #include "command_id.h"
 enum {
-    RET_SUCCESS,
     RET_WRONG_PIN = 4,
     RET_VALIDATION_FAILED = dev_command_status_range + 10,
     RET_VALIDATION_PASSED,

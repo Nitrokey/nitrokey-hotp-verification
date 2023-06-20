@@ -51,7 +51,7 @@ struct Device dev;
 TEST_CASE("Test correct codes", "[HOTP]") {
     int res;
     res = device_connect(&dev);
-    REQUIRE(res == true);
+    REQUIRE(res == RET_NO_ERROR);
     res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
     REQUIRE(res == RET_NO_ERROR);
     for (auto c: RFC_HOTP_codes) {
@@ -65,7 +65,7 @@ TEST_CASE("Test correct codes", "[HOTP]") {
 TEST_CASE("Test correct codes set with initial counter value", "[HOTP]") {
     int res;
     res = device_connect(&dev);
-    REQUIRE(res == true);
+    REQUIRE(res == RET_NO_ERROR);
     int code = 0;
     for (auto c: RFC_HOTP_codes) {
         INFO("Setting slot with counter value " << code);
@@ -81,7 +81,7 @@ TEST_CASE("Test correct codes set with initial counter value", "[HOTP]") {
 TEST_CASE("Test incorrect codes", "[HOTP]") {
     int res;
     res = device_connect(&dev);
-    REQUIRE(res == true);
+    REQUIRE(res == RET_NO_ERROR);
     res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
     REQUIRE(res == RET_NO_ERROR);
 
@@ -97,7 +97,7 @@ TEST_CASE("Test incorrect codes", "[HOTP]") {
 TEST_CASE("Test codes with offset 2", "[HOTP]") {
     int res;
     res = device_connect(&dev);
-    REQUIRE(res == true);
+    REQUIRE(res == RET_NO_ERROR);
     res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
     REQUIRE(res == RET_NO_ERROR);
 
@@ -114,7 +114,7 @@ TEST_CASE("Test codes with offset 2", "[HOTP]") {
 TEST_CASE("Test code with maximum offsets", "[HOTP]") {
     int res;
     res = device_connect(&dev);
-    REQUIRE(res == true);
+    REQUIRE(res == RET_NO_ERROR);
     res = set_secret_on_device(&dev, base32_secret, admin_PIN, 0);
     REQUIRE(res == RET_NO_ERROR);
 
@@ -138,7 +138,7 @@ TEST_CASE("Test code with maximum offsets", "[HOTP]") {
 TEST_CASE("Try to set the HOTP secret with wrong PIN and test PIN counters", "[HOTP]") {
     int res;
     res = device_connect(&dev);
-    REQUIRE(res == true);
+    REQUIRE(res == RET_NO_ERROR);
 
 #ifdef CCID_AUTHENTICATE
     SECTION("actual test") {
@@ -184,14 +184,20 @@ TEST_CASE("Try to set the HOTP secret with wrong PIN and test PIN counters", "[H
 TEST_CASE("Try to set the HOTP secret without PIN", "[HOTP]") {
     int res;
     res = device_connect(&dev);
-    REQUIRE(res == true);
+    REQUIRE(res == RET_NO_ERROR);
+
+    if (dev.connection_type != CONNECTION_CCID) {
+        res = device_disconnect(&dev);
+        REQUIRE(res == RET_NO_ERROR);
+        return;
+    }
 
     SECTION("actual test") {
         struct ResponseStatus status = {};
         res = device_get_status(&dev, &status);
-        REQUIRE(res == RET_NO_ERROR);
+        REQUIRE((res == RET_NO_ERROR || res == RET_NO_PIN_ATTEMPTS));
         const char *PIN_status_str = status.retry_admin == 0xFF ? "unset" : "set";
-        INFO("Current PIN status" << PIN_status_str);
+        INFO("Current PIN status: " << PIN_status_str);
 
         res = set_secret_on_device(&dev, base32_secret, "", 0);
         REQUIRE(res == RET_NO_ERROR);

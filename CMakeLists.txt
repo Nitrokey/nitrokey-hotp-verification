@@ -5,14 +5,22 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-guess-branch-probability -Wdate-time -frandom-seed=device.c -O0")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gno-record-gcc-switches ")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG ")  #comment out to show debug output
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdebug-prefix-map=${CMAKE_CURRENT_BINARY_DIR}=heads")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fanalyzer")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS}")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 SET(CMAKE_EXE_LINKER_FLAGS  "-O1 -fsanitize=address")
 
 set(GIT_VERSION_PLACEHOLDER "no-git-version")
+
+OPTION(ADD_LOG "Print debug information to stdout" FALSE)
+IF(NOT(ADD_LOG))
+    message("Removing debug prints. Use ADD_LOG option to enable them.")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG ")
+ELSE ()
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
+    message("Debug prints enabled.")
+ENDIF ()
 
 OPTION(ADD_GIT_INFO "Add information about source code version from Git repository" TRUE)
 IF(ADD_GIT_INFO)
@@ -28,7 +36,7 @@ ENDIF()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/version.c.in ${CMAKE_CURRENT_SOURCE_DIR}/src/version.c @ONLY)
 
 set(SOURCE_FILES
-        src/structs.h src/crc32.c src/crc32.h src/device.c src/device.h src/operations.c src/operations.h src/dev_commands.c src/dev_commands.h src/base32.c src/base32.h src/command_id.h src/random_data.c src/random_data.h src/min.c src/min.h src/settings.h src/version.h src/version.c src/return_codes.h src/return_codes.c src/ccid.h src/ccid.c src/tlv.c src/tlv.h src/operations_ccid.c src/operations_ccid.h src/utils.h
+        src/structs.h src/crc32.c src/crc32.h src/device.c src/device.h src/operations.c src/operations.h src/dev_commands.c src/dev_commands.h src/base32.c src/base32.h src/command_id.h src/random_data.c src/random_data.h src/min.c src/min.h src/settings.h src/version.h src/version.c src/return_codes.h src/return_codes.c src/ccid.h src/ccid.c src/tlv.c src/tlv.h src/operations_ccid.c src/operations_ccid.h src/utils.h src/utils.c
         )
 
 add_library(nitrokey_hotp_verification_core STATIC ${SOURCE_FILES})

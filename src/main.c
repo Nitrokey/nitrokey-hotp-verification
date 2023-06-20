@@ -22,6 +22,7 @@
 #include "ccid.h"
 #include "operations.h"
 #include "return_codes.h"
+#include "utils.h"
 #include "version.h"
 #include <stdio.h>
 #include <string.h>
@@ -49,8 +50,8 @@ int main(int argc, char *argv[]) {
 
     if (argc != 1 && argv[1][0] != 'v') {
         res = device_connect(&dev);
-        if (res != true) {
-            printf("Could not connect with the device\n");
+        if (res != RET_NO_ERROR) {
+            printf("Could not connect to the device\n");
             return EXIT_CONNECTION_ERROR;
         }
     }
@@ -91,9 +92,10 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 printf("%s\n", VERSION_GIT);
                 res = RET_NO_ERROR;
                 break;
-            case 'i': {
+            case 'i': {// id | info
                 struct ResponseStatus status;
                 res = device_get_status(&dev, &status);
+                check_ret((res != RET_NO_ERROR) && (res != RET_NO_PIN_ATTEMPTS), res);
                 if (strnlen(argv[1], 10) == 2 && argv[1][1] == 'd') {
                     // id command - print ID only
                     print_card_serial(&status);
@@ -112,7 +114,10 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                         printf("\tCard counters: PIN is not set - set PIN before the first use\n");
                     }
                 }
-                res = RET_NO_ERROR;
+                if (res == RET_NO_PIN_ATTEMPTS) {
+                    // Ignore if PIN is not set here
+                    res = RET_NO_ERROR;
+                }
             } break;
             case 'c':
                 if (argc != 3) break;

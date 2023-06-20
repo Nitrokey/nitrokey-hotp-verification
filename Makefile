@@ -14,6 +14,7 @@ SRC:= \
 	$(SRCDIR)/main.c \
 	$(SRCDIR)/tlv.c \
 	$(SRCDIR)/ccid.c \
+	$(SRCDIR)/utils.c \
 	$(SRCDIR)/operations_ccid.c
 
 SRC += \

@@ -61,11 +61,11 @@ struct Device {
     union {
         struct DeviceQuery packet_query;
         uint8_t ccid_buffer_out[MAX_CCID_BUFFER_SIZE];
-    };
+    } __packed;
     union {
         struct DeviceResponse packet_response;
         uint8_t ccid_buffer_in[MAX_CCID_BUFFER_SIZE];
-    };
+    } __packed;
     uint8_t user_temporary_password[TEMPORARY_PASSWORD_LENGTH];
     uint8_t admin_temporary_password[TEMPORARY_PASSWORD_LENGTH];
 };
