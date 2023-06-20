@@ -92,7 +92,7 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 printf("%s\n", VERSION_GIT);
                 res = RET_NO_ERROR;
                 break;
-            case 'i': {
+            case 'i': {// id | info
                 struct ResponseStatus status;
                 res = device_get_status(&dev, &status);
                 check_ret((res != RET_NO_ERROR) && (res != RET_NO_PIN_ATTEMPTS), res);
