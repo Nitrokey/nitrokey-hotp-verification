@@ -192,8 +192,7 @@ TEST_CASE("Try to set the HOTP secret without PIN", "[HOTP]") {
         return;
     }
 
-    SECTION("actual test")
-    {
+    SECTION("actual test") {
         struct ResponseStatus status = {};
         res = device_get_status(&dev, &status);
         REQUIRE((res == RET_NO_ERROR || res == RET_NO_PIN_ATTEMPTS));

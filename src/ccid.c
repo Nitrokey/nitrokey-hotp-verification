@@ -38,7 +38,7 @@ static const int READ_ENDPOINT = 0x81;
 
 static const int WRITE_ENDPOINT = 0x01;
 
-static const int TIMEOUT = 2*1000;
+static const int TIMEOUT = 2 * 1000;
 
 
 uint32_t icc_compose(uint8_t *buf, uint32_t buffer_length, uint8_t msg_type, size_t data_len, uint8_t slot, uint8_t seq, uint16_t param, uint8_t *data) {
