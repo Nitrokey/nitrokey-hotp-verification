@@ -41,8 +41,8 @@ TLV data_valid[] = {
 
 TEST_CASE("test ccid status", "[main]") {
     struct Device dev = {};
-    bool res = device_connect(&dev);
-    REQUIRE(res);
+    int res = device_connect(&dev);
+    REQUIRE(res == RET_NO_ERROR);
     int counter;
     uint16_t firmware_version;
     uint32_t serial;

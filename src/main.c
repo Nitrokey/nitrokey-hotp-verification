@@ -50,8 +50,8 @@ int main(int argc, char *argv[]) {
 
     if (argc != 1 && argv[1][0] != 'v') {
         res = device_connect(&dev);
-        if (res != true) {
-            printf("Could not connect with the device\n");
+        if (res != RET_NO_ERROR) {
+            printf("Could not connect to the device\n");
             return EXIT_CONNECTION_ERROR;
         }
     }

@@ -29,10 +29,10 @@ extern "C" {
 struct Device dev;
 
 
-TEST_CASE("Test correct codes", "[HOTP]") {
+TEST_CASE("Test AES key regeneration is working", "[HOTP]") {
     int res;
     res = device_connect(&dev);
-    REQUIRE(res == true);
+    REQUIRE(res == RET_NO_ERROR);
     res = regenerate_AES_key(&dev, "12345678");
     REQUIRE(res == RET_NO_ERROR);
     device_disconnect(&dev);
