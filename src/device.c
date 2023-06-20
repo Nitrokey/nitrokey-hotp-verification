@@ -195,8 +195,8 @@ int device_connect(struct Device *dev) {
 int device_connect_hid(struct Device *dev) {
     int count = CONNECTION_ATTEMPTS_COUNT;
 
-    if (dev->mp_devhandle != nullptr)
-        return 1;
+    // Abort if device seem to be initialized
+    rassert(dev->mp_devhandle == nullptr);
 
     while (count-- > 0) {
         for (size_t dev_id = 0; dev_id < devices_size; ++dev_id) {
