@@ -83,7 +83,7 @@ static const int CONNECTION_ATTEMPTS_COUNT = 2;
 static const int CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS = 1000 * 1000 / 2;
 
 int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size) {
-    const int receive_attempts = 10;
+    const int receive_attempts = 40;
     int i;
     int receive_status = 0;
     for (i = 0; i < receive_attempts; ++i) {
