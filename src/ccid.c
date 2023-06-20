@@ -162,6 +162,7 @@ libusb_device_handle *get_device(libusb_context *ctx, const struct VidPid pPid[]
 
 int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer, uint32_t receiving_buffer_length, const uint8_t *sending_buffer,
                         const uint32_t sending_buffer_length, IccResult *result) {
+    rassert(handle != NULL);
     int actual_length = 0, r;
 
     r = ccid_send(handle, &actual_length, sending_buffer, sending_buffer_length);
@@ -370,6 +371,10 @@ uint32_t icc_pack_tlvs_for_sending(uint8_t *buf, size_t buflen, TLV *tlvs, int t
 }
 
 int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char *returned_data, size_t buffer_length) {
+    rassert(device != NULL);
+    rassert(actual_length != NULL);
+    rassert(returned_data != NULL);
+    rassert(buffer_length > 0);
     int32_t _buffer_length = MIN(buffer_length, INT32_MAX);
     stopwatch_start();
     int r = libusb_bulk_transfer(device, READ_ENDPOINT, returned_data, _buffer_length, actual_length, TIMEOUT);
@@ -383,6 +388,10 @@ int ccid_receive(libusb_device_handle *device, int *actual_length, unsigned char
 }
 
 int ccid_send(libusb_device_handle *device, int *actual_length, const unsigned char *data, const size_t length) {
+    rassert(device != NULL);
+    rassert(actual_length != NULL);
+    rassert(data != NULL);
+    rassert(length > 0);
     print_buffer(data, length, "sending");
     stopwatch_start();
     int r = libusb_bulk_transfer(device, WRITE_ENDPOINT, (uint8_t *) data, (int) length, actual_length, TIMEOUT);
