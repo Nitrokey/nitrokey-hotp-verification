@@ -157,19 +157,19 @@ int device_connect_ccid(struct Device *dev) {
     int r = libusb_init(&dev->ctx_ccid);
     if (r < 0) {
         printf("Error initializing libusb: %s\n", libusb_strerror(r));
-        return false;
+        return RET_COMM_ERROR;
     }
     dev->mp_devhandle_ccid = get_device(dev->ctx_ccid, devices_ccid, 1);
     if (dev->mp_devhandle_ccid == NULL) {
-        return false;
+        return RET_COMM_ERROR;
     }
     ccid_init(dev->mp_devhandle_ccid);
 
-    return true;
+    return RET_NO_ERROR;
 }
 int device_connect(struct Device *dev) {
     int r = device_connect_hid(dev);
-    if (r) {
+    if (r == RET_NO_ERROR) {
         dev->connection_type = CONNECTION_HID;
         fprintf(stderr, "\n");
         fflush(stderr);
@@ -180,7 +180,7 @@ int device_connect(struct Device *dev) {
     fflush(stderr);
     fprintf(stderr, ".");
     r = device_connect_ccid(dev);
-    if (r) {
+    if (r == RET_NO_ERROR) {
         dev->connection_type = CONNECTION_CCID;
         fprintf(stderr, "\n");
         fflush(stderr);
@@ -189,7 +189,7 @@ int device_connect(struct Device *dev) {
 #endif
 
     fprintf(stderr, "\n");
-    return false;
+    return RET_COMM_ERROR;
 }
 
 int device_connect_hid(struct Device *dev) {
@@ -204,7 +204,7 @@ int device_connect_hid(struct Device *dev) {
             dev->mp_devhandle = hid_open(vidPid.vid, vidPid.pid, nullptr);
             if (dev->mp_devhandle != nullptr) {
                 dev->dev_info = vidPid;
-                return true;
+                return RET_NO_ERROR;
             }
             usleep(CONNECTION_ATTEMPT_DELAY_MICRO_SECONDS);
         }
@@ -215,7 +215,7 @@ int device_connect_hid(struct Device *dev) {
         fflush(stderr);
     }
 
-    return false;
+    return RET_COMM_ERROR;
 }
 
 int device_disconnect(struct Device *dev) {
