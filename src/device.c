@@ -224,14 +224,17 @@ int device_disconnect(struct Device *dev) {
         libusb_release_interface(dev->mp_devhandle_ccid, 0);
         libusb_close(dev->mp_devhandle_ccid);
         libusb_exit(dev->ctx_ccid);
+        dev->mp_devhandle_ccid = nullptr;
         device_clear_buffers(dev);
+        dev->connection_type = CONNECTION_UNKNOWN;
         return RET_NO_ERROR;
     } else if (dev->connection_type == CONNECTION_HID) {
         if (dev->mp_devhandle == nullptr) return 1;//TODO name error value
         hid_close(dev->mp_devhandle);
+        hid_exit();
         dev->mp_devhandle = nullptr;
         device_clear_buffers(dev);
-        hid_exit();
+        dev->connection_type = CONNECTION_UNKNOWN;
         return RET_NO_ERROR;
     }
     return RET_UNKNOWN_DEVICE;
