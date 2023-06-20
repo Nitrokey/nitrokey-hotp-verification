@@ -293,13 +293,18 @@ int device_get_status(struct Device *dev, struct ResponseStatus *out_status) {
     *out_status = *(struct ResponseStatus *) dev->packet_response.response_st.payload;
 
     if (out_status->firmware_version_st.minor == 1) {
-        device_send_buf(dev, GET_DEVICE_STATUS);
-        device_receive_buf(dev);
+        for (int i = 0; i < 100; ++i) {
+            device_send_buf(dev, GET_DEVICE_STATUS);
+            device_receive_buf(dev);
 
-        struct StatusResponsePayloadStorage *status = (struct StatusResponsePayloadStorage *) (dev->packet_response.response_st.payload + 22);
-        out_status->card_serial_u32 = status->ActiveSmartCardID_u32;
-        out_status->firmware_version_st.major = status->versionInfo.major;
-        out_status->firmware_version_st.minor = status->versionInfo.minor;
+            struct StatusResponsePayloadStorage *status = (struct StatusResponsePayloadStorage *) (dev->packet_response.response_st.payload + 22);
+            out_status->card_serial_u32 = status->ActiveSmartCardID_u32;
+            out_status->firmware_version_st.major = status->versionInfo.major;
+            out_status->firmware_version_st.minor = status->versionInfo.minor;
+            if (out_status->card_serial_u32 != 0) {
+                break;
+            }
+        }
     }
 
     out_status->retry_admin = retry_admin;
