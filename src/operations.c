@@ -102,7 +102,7 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
            min(sizeof(otpData_name.temporary_admin_password), sizeof(dev->admin_temporary_password)));
     otpData_name.type = 'N';
     otpData_name.id = 0;
-    memcpy(otpData_name.data, HOTP_SLOT_NAME, strnlen(HOTP_SLOT_NAME, sizeof(otpData_name.data)));
+    memcpy(otpData_name.data, HOTP_SLOT_NAME, SLOT_NAME_LEN);
     res = device_send(dev, (uint8_t *) &otpData_name, sizeof(otpData_name), SEND_OTP_DATA);
     if (res != RET_NO_ERROR) return res;
     res = device_receive_buf(dev);
