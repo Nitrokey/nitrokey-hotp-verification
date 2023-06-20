@@ -334,59 +334,15 @@ int ccid_init(libusb_device_handle *handle) {
             0x01,
     };
 
-    unsigned char cmd_poweron[] = {
-            0x62,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-    };
-
-    unsigned char cmd_poweroff[] = {
-            0x63,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-    };
-
-    unsigned char cmd_info[] = {
-            0x61,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-    };
 
     const unsigned char *data_to_send[] = {
             cmd_select,
             cmd_select,
-            //            cmd_poweron,
-            //                        cmd_poweroff,
-            //                        cmd_info,
     };
 
     const unsigned int data_to_send_size[] = {
             sizeof(cmd_select),
             sizeof(cmd_select),
-            //            sizeof(cmd_poweron),
-            //                        sizeof(cmd_poweroff),
-            //                        sizeof(cmd_info),
     };
 
     unsigned char buf[MAX_CCID_BUFFER_SIZE] = {};
