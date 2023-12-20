@@ -99,6 +99,36 @@ int authenticate_ccid(struct Device *dev, const char *admin_PIN) {
     return RET_NO_ERROR;
 }
 
+int delete_secret_on_device_ccid(struct Device *dev) {    
+    TLV tlvs[] = {
+        {
+            .tag = Tag_CredentialId,
+            .length = SLOT_NAME_LEN,
+            .type = 'S',
+            .v_str = SLOT_NAME,
+        }
+    };
+
+    clean_buffers(dev);
+    // encode
+    uint32_t icc_actual_length = icc_pack_tlvs_for_sending(dev->ccid_buffer_out, sizeof dev->ccid_buffer_out,
+                                                           tlvs, ARR_LEN(tlvs), Ins_Delete);
+    // send
+    IccResult iccResult;
+    int r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
+                                dev->ccid_buffer_out, icc_actual_length, &iccResult);
+    if (r != 0) {
+        return r;
+    }
+
+    // check status code
+    if (iccResult.data_status_code == 0x6a82 || iccResult.data_status_code == 0x9000) {
+        return 0;
+    } else {
+        return RET_VALIDATION_FAILED;
+    }
+    return r;
+}
 
 int set_secret_on_device_ccid(struct Device *dev, const char *OTP_secret_base32, const uint64_t hotp_counter) {
     // Decode base32 secret
@@ -114,6 +144,11 @@ int set_secret_on_device_ccid(struct Device *dev, const char *OTP_secret_base32,
 
     rassert(hotp_counter < 0xFFFFFFFF);
     uint32_t initial_counter_value = hotp_counter;
+
+    int r = delete_secret_on_device_ccid(dev);
+    if (r != 0) {
+        return r;
+    }
 
     TLV tlvs[] = {
             {
@@ -150,7 +185,7 @@ int set_secret_on_device_ccid(struct Device *dev, const char *OTP_secret_base32,
 
     // send
     IccResult iccResult;
-    int r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
+    r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
                                 dev->ccid_buffer_out, icc_actual_length, &iccResult);
 
 
