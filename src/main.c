@@ -110,8 +110,6 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                     if (res != RET_NO_PIN_ATTEMPTS) {
                         printf("\tCard counters: Admin %d, User %d\n",
                                status.retry_admin, status.retry_user);
-                    } else {
-                        printf("\tCard counters: PIN is not set - set PIN before the first use\n");
                     }
                 }
                 if (res == RET_NO_PIN_ATTEMPTS) {
