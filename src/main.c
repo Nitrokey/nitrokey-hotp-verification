@@ -82,7 +82,6 @@ void print_card_serial(struct ResponseStatus *status) {
         printf("N/A\n");
     }
 }
-
 int parse_cmd_and_run(int argc, char *const *argv) {
     int res = RET_INVALID_PARAMS;
     if (argc > 1) {
@@ -107,7 +106,7 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                     printf("\tFirmware: v%d.%d\n",
                            status.firmware_version_st.major,
                            status.firmware_version_st.minor);
-                    if (res != RET_NO_PIN_ATTEMPTS) {
+                    if (res != RET_NO_PIN_ATTEMPTS && status.retry_admin != -1 && status.retry_user != -1) {
                         printf("\tCard counters: Admin %d, User %d\n",
                                status.retry_admin, status.retry_user);
                     } else {
