@@ -27,6 +27,7 @@
 #include "min.h"
 #include "operations_ccid.h"
 #include "random_data.h"
+#include "return_codes.h"
 #include "settings.h"
 #include "structs.h"
 #include "utils.h"
@@ -71,7 +72,8 @@ int set_secret_on_device(struct Device *dev, const char *OTP_secret_base32, cons
             check_ret(authenticate_ccid(dev, admin_PIN), RET_WRONG_PIN);
         }
 #endif
-        return set_secret_on_device_ccid(dev, OTP_secret_base32, hotp_counter);
+
+        return set_secret_on_device_ccid(dev, admin_PIN, OTP_secret_base32, hotp_counter);
     }
 
 

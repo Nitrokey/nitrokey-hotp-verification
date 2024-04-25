@@ -91,6 +91,9 @@ int authenticate_ccid(struct Device *dev, const char *admin_PIN) {
         // Invalid PIN or PIN attempt counter is used up
         return RET_WRONG_PIN;
     }
+    if (iccResult.data_status_code == 0x6982) {
+        return RET_SECURITY_STATUS_NOT_SATISFIED;
+    }
     if (iccResult.data_status_code != 0x9000) {
         // TODO print the error code
         return 1;
@@ -98,6 +101,19 @@ int authenticate_ccid(struct Device *dev, const char *admin_PIN) {
 
     return RET_NO_ERROR;
 }
+
+// Attempt to authenticate with admin_PIN. If the PIN is not set (status code 0x6982), create the PIN
+// with the given value
+int authenticate_or_set_ccid(struct Device *dev, const char *admin_PIN) {
+    int r = authenticate_ccid(dev, admin_PIN);
+    if (r == RET_SECURITY_STATUS_NOT_SATISFIED) {
+        check_ret(set_pin_ccid(dev, admin_PIN), RET_SECURITY_STATUS_NOT_SATISFIED);
+        return authenticate_ccid(dev, admin_PIN);
+    }
+
+    return RET_NO_ERROR;
+}
+
 
 int delete_secret_on_device_ccid(struct Device *dev) {    
     TLV tlvs[] = {
@@ -130,7 +146,7 @@ int delete_secret_on_device_ccid(struct Device *dev) {
     return r;
 }
 
-int set_secret_on_device_ccid(struct Device *dev, const char *OTP_secret_base32, const uint64_t hotp_counter) {
+int set_secret_on_device_ccid(struct Device *dev, const char *admin_PIN, const char *OTP_secret_base32, const uint64_t hotp_counter) {
     // Decode base32 secret
     uint8_t binary_secret_buf[HOTP_SECRET_SIZE_BYTES + 2] = {0};
     const size_t decoded_length = base32_decode((const unsigned char *) OTP_secret_base32, binary_secret_buf + 2) + 2;
@@ -150,6 +166,13 @@ int set_secret_on_device_ccid(struct Device *dev, const char *OTP_secret_base32,
         return r;
     }
 
+#ifdef CCID_SECRETS_AUTHENTICATE_OR_CREATE_PIN
+        if (strnlen(admin_PIN, 30) > 0) {
+            if (authenticate_or_set_ccid(dev, admin_PIN) != RET_NO_ERROR) {
+                return RET_SECURITY_STATUS_NOT_SATISFIED;
+            }
+        }
+#endif
     TLV tlvs[] = {
             {
                     .tag = Tag_CredentialId,
