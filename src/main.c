@@ -35,11 +35,12 @@ void print_help(char *app_name) {
     printf("Available commands: \n"
            "\t%s id\n"
            "\t%s info\n"
+           "\t%s pin-info\n"
            "\t%s version\n"
            "\t%s check <HOTP CODE>\n"
            "\t%s regenerate <ADMIN PIN>\n"
            "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]\n",
-           app_name, app_name, app_name, app_name, app_name, app_name);
+           app_name, app_name, app_name, app_name, app_name, app_name, app_name);
 }
 
 
@@ -113,6 +114,21 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                     } else {
                         printf("\tCard counters: PIN is not set - set PIN before the first use\n");
                     }
+                }
+                if (res == RET_NO_PIN_ATTEMPTS) {
+                    // Ignore if PIN is not set here
+                    res = RET_NO_ERROR;
+                }
+            } break;
+            case 'p': { // pin-info
+                struct ResponseStatus status;
+                res = device_get_status(&dev, &status);
+                check_ret((res != RET_NO_ERROR) && (res != RET_NO_PIN_ATTEMPTS), res);
+                if (res != RET_NO_PIN_ATTEMPTS) {
+                    printf("Admin PIN counter: %d\nUser PIN Counter: %d\n",
+                           status.retry_admin, status.retry_user);
+                } else {
+                    printf("Admin PIN counter: Not set\nUser PIN Counter: Not set\n");
                 }
                 if (res == RET_NO_PIN_ATTEMPTS) {
                     // Ignore if PIN is not set here
