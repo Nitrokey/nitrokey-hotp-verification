@@ -64,6 +64,21 @@ int set_pin_ccid(struct Device *dev, const char *admin_PIN) {
 }
 
 int nk3_change_pin(struct Device *dev, const char *old_pin, const char*new_pin) {
+    libusb_device *usb_dev;
+    struct libusb_device_descriptor usb_desc;
+    usb_dev = libusb_get_device(dev->mp_devhandle_ccid);
+
+    int r = libusb_get_device_descriptor(usb_dev, &usb_desc);
+
+    if (r < 0) {
+        return r;
+    }
+
+
+    if (usb_desc.idVendor != NITROKEY_USB_VID || usb_desc.idProduct != NITROKEY_3_USB_PID) {
+        return 0;
+    }
+
     TLV tlvs[] = {
         {
             .tag = Tag_Password,
@@ -83,7 +98,7 @@ int nk3_change_pin(struct Device *dev, const char *old_pin, const char*new_pin) 
                                                            tlvs, ARR_LEN(tlvs), Ins_ChangePIN);
     // send
     IccResult iccResult;
-    int r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
+    r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
                                 dev->ccid_buffer_out, icc_actual_length, &iccResult);
     if (r != 0) {
         return r;
