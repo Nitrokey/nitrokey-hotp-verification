@@ -21,6 +21,7 @@
 
 #include "ccid.h"
 #include "operations.h"
+#include "operations_ccid.h"
 #include "return_codes.h"
 #include "utils.h"
 #include "operations_ccid.h"
@@ -161,8 +162,13 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 }
                 break;
             case 'r':
-                if (argc != 3) break;
-                res = regenerate_AES_key(&dev, argv[2]);
+                if (strncmp(argv[1], "reset", 15) == 0) {
+                    if (argc != 2) break;
+                    res = nk3_reset(&dev);
+                } else if (strncmp(argv[1], "regenerate", 15) == 0) {
+                    if (argc != 3) break;
+                    res = regenerate_AES_key(&dev, argv[2]);
+                }
                 break;
             default:
                 break;

@@ -32,6 +32,47 @@
 #include <string.h>
 
 
+
+int nk3_reset(struct Device *dev) {
+    libusb_device *usb_dev;
+    struct libusb_device_descriptor usb_desc;
+    usb_dev = libusb_get_device(dev->mp_devhandle_ccid);
+
+    int r = libusb_get_device_descriptor(usb_dev, &usb_desc);
+
+    if (r < 0) {
+        return r;
+    }
+
+
+    if (usb_desc.idVendor != NITROKEY_USB_VID || usb_desc.idProduct != NITROKEY_3_USB_PID) {
+        return 0;
+    }
+
+
+    uint8_t buf[10];
+    // encode
+    uint32_t icc_actual_length = iso7816_compose(buf, sizeof buf, Ins_Reset, 0xDE, 0xAD, 0, 0, NULL, 0);
+
+    // encode ccid wrapper
+    icc_actual_length = icc_compose(dev->ccid_buffer_out, sizeof dev->ccid_buffer_out,
+                                             0x6F, icc_actual_length,
+                                             0, 0, 0, buf);
+    // send
+    IccResult iccResult;
+    r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
+                                dev->ccid_buffer_out, icc_actual_length, &iccResult);
+    if (r != 0) {
+        return r;
+    }
+    // check status code
+    if (iccResult.data_status_code != 0x9000) {
+        return 1;
+    }
+
+    return RET_NO_ERROR;
+}
+
 int set_pin_ccid(struct Device *dev, const char *admin_PIN) {
     TLV tlvs[] = {
             {
