@@ -33,7 +33,7 @@
 
 
 
-int nk3_reset(struct Device *dev) {
+int nk3_reset(struct Device *dev, const char * new_pin) {
     libusb_device *usb_dev;
     struct libusb_device_descriptor usb_desc;
     usb_dev = libusb_get_device(dev->mp_devhandle_ccid);
@@ -68,6 +68,10 @@ int nk3_reset(struct Device *dev) {
     // check status code
     if (iccResult.data_status_code != 0x9000) {
         return 1;
+    }
+
+    if (new_pin != NULL) {
+        set_pin_ccid(dev, new_pin);
     }
 
     return RET_NO_ERROR;

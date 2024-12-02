@@ -41,8 +41,11 @@ void print_help(char *app_name) {
            "\t%s check <HOTP CODE>\n"
            "\t%s regenerate <ADMIN PIN>\n"
            "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]\n"
-           "\t%s nk3-change-pin <old-pin> <new-pin>\n",
-           app_name, app_name, app_name, app_name, app_name, app_name, app_name);
+           "\t%s nk3-change-pin <old-pin> <new-pin>\n"
+           "\t%s reset [ADMIN PIN]\n"
+           "\t%s regenerate\n"
+           "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]\n",
+           app_name, app_name, app_name, app_name, app_name, app_name, app_name, app_name, app_name, app_name);
 }
 
 
@@ -163,8 +166,8 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 break;
             case 'r':
                 if (strncmp(argv[1], "reset", 15) == 0) {
-                    if (argc != 2) break;
-                    res = nk3_reset(&dev);
+                    if (argc != 2 && argc != 3) break;
+                    res = nk3_reset(&dev, argc == 3 ? argv[2]: NULL);
                 } else if (strncmp(argv[1], "regenerate", 15) == 0) {
                     if (argc != 3) break;
                     res = regenerate_AES_key(&dev, argv[2]);
