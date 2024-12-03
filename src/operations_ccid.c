@@ -36,6 +36,12 @@
 int nk3_reset(struct Device *dev, const char * new_pin) {
     libusb_device *usb_dev;
     struct libusb_device_descriptor usb_desc;
+
+    if (!dev->mp_devhandle_ccid) {
+        // Not an NK3
+        return RET_NO_ERROR;
+    }
+    
     usb_dev = libusb_get_device(dev->mp_devhandle_ccid);
 
     int r = libusb_get_device_descriptor(usb_dev, &usb_desc);
@@ -46,7 +52,7 @@ int nk3_reset(struct Device *dev, const char * new_pin) {
 
 
     if (usb_desc.idVendor != NITROKEY_USB_VID || usb_desc.idProduct != NITROKEY_3_USB_PID) {
-        return 0;
+        return RET_NO_ERROR;
     }
 
 
