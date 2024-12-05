@@ -104,7 +104,7 @@ IccResult parse_icc_result(uint8_t *buf, size_t buf_len) {
             //            .buffer_len = buf_len
     };
     // Make sure the response do not contain overread attempts
-    rassert(i.data_len < buf_len - 10);
+    rassert(i.data_len <= buf_len - 10);
     return i;
 }
 
@@ -307,6 +307,75 @@ int send_select_ccid(libusb_device_handle *handle, uint8_t buf[], size_t buf_siz
     return RET_NO_ERROR;
 }
 
+int send_select_nk3_admin_ccid(libusb_device_handle *handle, uint8_t buf[], size_t buf_size, IccResult *iccResult) {
+    unsigned char cmd_select[] = {
+            0x6f,
+            0x0E,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xa4,
+            0x04,
+            0x00,
+            0x09,
+            0xa0,
+            0x00,
+            0x00,
+            0x08,
+            0x47,
+            0x00,
+            0x00,
+            0x00,
+            0x01,
+    };
+
+    check_ret(
+            ccid_process_single(handle, buf, buf_size, cmd_select, sizeof cmd_select, iccResult),
+            RET_COMM_ERROR);
+
+
+    return RET_NO_ERROR;
+}
+
+int send_select_nk3_pgp_ccid(libusb_device_handle *handle, uint8_t buf[], size_t buf_size, IccResult *iccResult) {
+    unsigned char cmd_select[] = {
+            0x6f,
+            0x0C,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xA4,
+            0x04,
+            0x00,
+            0x06,
+            0xD2,
+            0x76,
+            0x00,
+            0x01,
+            0x24,
+            0x01,
+            0x00,
+    };
+
+    check_ret(
+            ccid_process_single(handle, buf, buf_size, cmd_select, sizeof cmd_select, iccResult),
+            RET_COMM_ERROR);
+
+
+    return RET_NO_ERROR;
+}
 
 int ccid_init(libusb_device_handle *handle) {
 

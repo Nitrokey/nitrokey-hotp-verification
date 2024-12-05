@@ -273,14 +273,102 @@ int verify_code_ccid(struct Device *dev, const uint32_t code_to_verify) {
     return RET_VALIDATION_PASSED;
 }
 
-int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *firmware_version, uint32_t *serial_number) {
+int status_ccid(libusb_device_handle *handle, struct FullResponseStatus *full_response) {
+    rassert(full_response != NULL);
+    struct ResponseStatus *response = &full_response->response_status;
     rassert(handle != NULL);
-    rassert(attempt_counter != NULL);
-    rassert(firmware_version != NULL);
-    rassert(serial_number != NULL);
     uint8_t buf[1024] = {};
     IccResult iccResult = {};
-    int r = send_select_ccid(handle, buf, sizeof buf, &iccResult);
+    bool pin_counter_is_error = false;
+    int r;
+    libusb_device *usb_dev;
+    struct libusb_device_descriptor usb_desc;
+
+    usb_dev = libusb_get_device(handle);
+
+    r = libusb_get_device_descriptor(usb_dev, &usb_desc);
+
+    if (r < 0) {
+        return r;
+    }
+
+
+    if (usb_desc.idVendor == NITROKEY_USB_VID || usb_desc.idProduct == NITROKEY_3_USB_PID) {
+        full_response->device_type = Nk3;
+    } else if (usb_desc.idVendor == NITROKEY_USB_VID || usb_desc.idProduct == NITROKEY_PRO_USB_PID) {
+        full_response->device_type = NkPro2;
+    } else if (usb_desc.idVendor == NITROKEY_USB_VID || usb_desc.idProduct == NITROKEY_STORAGE_USB_PID) {
+        full_response->device_type = NkStorage;
+    } else if (usb_desc.idVendor == LIBREM_KEY_USB_VID || usb_desc.idProduct == LIBREM_KEY_USB_PID) {
+        full_response->device_type = LibremKey;
+    }
+
+    if (full_response->device_type == Nk3) {
+        r = send_select_nk3_admin_ccid(handle, buf, sizeof buf, &iccResult);
+        if (r != RET_NO_ERROR) {
+            return r;
+        }
+
+        uint8_t data_iso[MAX_CCID_BUFFER_SIZE] = {};
+        uint32_t iso_actual_length = iso7816_compose(
+                data_iso, sizeof data_iso,
+                0x61, 0, 0, 0, 4, NULL, 0);
+
+        // encode ccid wrapper
+        uint32_t icc_actual_length = icc_compose(buf, sizeof buf,
+                                                 0x6F, iso_actual_length,
+                                                 0, 0, 0, data_iso);
+        int transferred;
+        r = ccid_send(handle, &transferred, buf, icc_actual_length);
+        if (r != 0) {
+            return r;
+        }
+
+        r = ccid_receive(handle, &transferred, buf, sizeof buf);
+        if (r != 0) {
+            return r;
+        }
+
+        IccResult iccResult = parse_icc_result(buf, transferred);
+        rassert(iccResult.data_status_code == 0x9000);
+        rassert(iccResult.data_len == 6);
+        full_response->nk3_extra_info.firmware_version = be32toh(*(uint32_t *) iccResult.data);
+    }
+
+    if (full_response->device_type == Nk3) {
+        r = send_select_nk3_pgp_ccid(handle, buf, sizeof buf, &iccResult);
+        if (r != RET_NO_ERROR) {
+            return r;
+        }
+
+        uint8_t data_iso[MAX_CCID_BUFFER_SIZE] = {};
+        uint32_t iso_actual_length = iso7816_compose(
+                data_iso, sizeof data_iso,
+                0xCA, 0, 0xC4, 0, 0xFF, NULL, 0);
+
+        // encode ccid wrapper
+        uint32_t icc_actual_length = icc_compose(buf, sizeof buf,
+                                                 0x6F, iso_actual_length,
+                                                 0, 0, 0, data_iso);
+        int transferred;
+        r = ccid_send(handle, &transferred, buf, icc_actual_length);
+        if (r != 0) {
+            return r;
+        }
+
+        r = ccid_receive(handle, &transferred, buf, sizeof buf);
+        if (r != 0) {
+            return r;
+        }
+
+        IccResult iccResult = parse_icc_result(buf, transferred);
+        rassert(iccResult.data_status_code == 0x9000);
+        rassert(iccResult.data_len == 9);
+        full_response->nk3_extra_info.pgp_user_pin_retries = iccResult.data[4];
+        full_response->nk3_extra_info.pgp_admin_pin_retries = iccResult.data[6];
+    }
+
+    r = send_select_ccid(handle, buf, sizeof buf, &iccResult);
     if (r != RET_NO_ERROR) {
         return r;
     }
@@ -292,29 +380,30 @@ int status_ccid(libusb_device_handle *handle, int *attempt_counter, uint16_t *fi
     r = get_tlv(iccResult.data, iccResult.data_len, Tag_PINCounter, &counter_tlv);
     if (!(r == RET_NO_ERROR && counter_tlv.tag == Tag_PINCounter)) {
         // PIN counter not found - comm error (ignore) or PIN not set
-        *attempt_counter = -1;
+        pin_counter_is_error = true;
     } else {
-        *attempt_counter = counter_tlv.v_data[0];
+        response->retry_admin = counter_tlv.v_data[0];
+        response->retry_user = counter_tlv.v_data[0];
     }
 
     TLV serial_tlv = {};
     r = get_tlv(iccResult.data, iccResult.data_len, Tag_SerialNumber, &serial_tlv);
     if (r == RET_NO_ERROR && serial_tlv.tag == Tag_SerialNumber) {
-        *serial_number = be32toh(*(uint32_t *) serial_tlv.v_data);
+        response->card_serial_u32 = be32toh(*(uint32_t *) serial_tlv.v_data);
     } else {
         // ignore errors - unsupported or hidden serial_tlv number
-        *serial_number = 0;
+        response->card_serial_u32 = 0;
     }
 
     TLV version_tlv = {};
     r = get_tlv(iccResult.data, iccResult.data_len, Tag_Version, &version_tlv);
     if (!(r == RET_NO_ERROR && version_tlv.tag == Tag_Version)) {
-        *firmware_version = 0;
+        response->firmware_version = 0;
         return RET_COMM_ERROR;
     }
-    *firmware_version = be16toh(*(uint16_t *) version_tlv.v_data);
+    response->firmware_version = be16toh(*(uint16_t *) version_tlv.v_data);
 
-    if (*attempt_counter == -1) {
+    if (pin_counter_is_error == true) {
         return RET_NO_PIN_ATTEMPTS;
     }
     return RET_NO_ERROR;

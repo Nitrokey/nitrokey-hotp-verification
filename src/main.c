@@ -93,25 +93,46 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 res = RET_NO_ERROR;
                 break;
             case 'i': {// id | info
-                struct ResponseStatus status;
+                struct FullResponseStatus status;
+                memset(&status, 0, sizeof (struct FullResponseStatus));
+
                 res = device_get_status(&dev, &status);
                 check_ret((res != RET_NO_ERROR) && (res != RET_NO_PIN_ATTEMPTS), res);
                 if (strnlen(argv[1], 10) == 2 && argv[1][1] == 'd') {
                     // id command - print ID only
-                    print_card_serial(&status);
+                    print_card_serial(&status.response_status);
                 } else {
                     // info command - print status
                     printf("Connected device status:\n");
                     printf("\tCard serial: ");
-                    print_card_serial(&status);
-                    printf("\tFirmware: v%d.%d\n",
-                           status.firmware_version_st.major,
-                           status.firmware_version_st.minor);
-                    if (res != RET_NO_PIN_ATTEMPTS) {
-                        printf("\tCard counters: Admin %d, User %d\n",
-                               status.retry_admin, status.retry_user);
+                    print_card_serial(&status.response_status);
+                    if (status.device_type == Nk3) {
+                         printf("\tFirmware Nitrokey 3: v%d.%d.%d\n",
+                               (status.nk3_extra_info.firmware_version >> 22) & 0b1111111111,
+                               (status.nk3_extra_info.firmware_version >> 6) & 0xFFFF,
+                               status.nk3_extra_info.firmware_version & 0b111111);
+                        printf("\tFirmware Secrets App: v%d.%d\n",
+                               status.response_status.firmware_version_st.major,
+                               status.response_status.firmware_version_st.minor);
+                        if (res != RET_NO_PIN_ATTEMPTS) {
+                            printf("\tSecrets app PIN counter: %d\n",
+                                   status.response_status.retry_user);
+                        } else {
+                            printf("\tSecrets app PIN counter: PIN is not set - set PIN before the first use\n");
+                        }
+                        printf("\tGPG Card counters: Admin %d, User %d\n",
+                               status.nk3_extra_info.pgp_admin_pin_retries,
+                               status.nk3_extra_info.pgp_user_pin_retries);
                     } else {
-                        printf("\tCard counters: PIN is not set - set PIN before the first use\n");
+                        printf("\tFirmware: v%d.%d\n",
+                               status.response_status.firmware_version_st.major,
+                               status.response_status.firmware_version_st.minor);
+                        if (res != RET_NO_PIN_ATTEMPTS) {
+                            printf("\tCard counters: Admin %d, User %d\n",
+                                   status.response_status.retry_admin, status.response_status.retry_user);
+                        } else {
+                            printf("\tCard counters: PIN is not set - set PIN before the first use\n");
+                        }
                     }
                 }
                 if (res == RET_NO_PIN_ATTEMPTS) {
