@@ -72,7 +72,7 @@ struct Device {
 
 int device_connect(struct Device *dev);
 int device_disconnect(struct Device *dev);
-int device_get_status(struct Device *dev, struct ResponseStatus *out_status);
+int device_get_status(struct Device *dev, struct FullResponseStatus *out_status);
 int device_send(struct Device *dev, uint8_t *in_data, size_t data_size, uint8_t command_ID);
 int device_receive(struct Device *dev, uint8_t *out_data, size_t out_buffer_size);
 int device_send_buf(struct Device *dev, uint8_t command_ID);

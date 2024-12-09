@@ -29,6 +29,7 @@
 #include "structs.h"
 #include "utils.h"
 #include <assert.h>
+#include <hidapi/hidapi.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -259,23 +260,19 @@ int device_receive_buf(struct Device *dev) {
 
 #include "operations_ccid.h"
 
-int device_get_status(struct Device *dev, struct ResponseStatus *out_status) {
-    assert(out_status != NULL);
+int device_get_status(struct Device *dev, struct FullResponseStatus *out_response) {
+    assert(out_response != NULL);
     assert(dev != NULL);
-    memset(out_status, 0, sizeof(struct ResponseStatus));
+    memset(out_response, 0, sizeof(struct FullResponseStatus));
+
+    struct ResponseStatus *out_status = &out_response->response_status;
 
     if (dev->connection_type == CONNECTION_CCID) {
-        int counter = 0;
-        uint32_t serial = 0;
-        uint16_t version = 0;
-        int res = status_ccid(dev->mp_devhandle_ccid,
-                              &counter,
-                              &version,
-                              &serial);
-        out_status->retry_admin = counter;
-        out_status->retry_user = counter;
-        out_status->card_serial_u32 = serial;
-        out_status->firmware_version = version;
+        int res = status_ccid(dev->mp_devhandle_ccid, out_response);
+        // out_status->retry_admin = counter;
+        // out_status->retry_user = counter;
+        // out_status->card_serial_u32 = serial;
+        // out_status->firmware_version = version;
         return res;
     }
 
@@ -290,7 +287,7 @@ int device_get_status(struct Device *dev, struct ResponseStatus *out_status) {
 
     device_send_buf(dev, GET_STATUS);
     device_receive_buf(dev);
-    *out_status = *(struct ResponseStatus *) dev->packet_response.response_st.payload;
+    out_response->response_status = *(struct ResponseStatus *) dev->packet_response.response_st.payload;
 
     if (out_status->firmware_version_st.minor == 1) {
         for (int i = 0; i < 100; ++i) {
