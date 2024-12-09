@@ -116,6 +116,25 @@ struct ResponseStatus {
     uint8_t retry_user;  /*not present in the firmware response for the Status command in v0.8 firmware*/
 };
 
+enum DeviceType {
+  Unknown = 0,
+  Nk3,
+  NkPro2,  
+  NkStorage,
+  LibremKey,
+};
+
+struct FullResponseStatus {
+    enum DeviceType device_type;
+    struct ResponseStatus response_status;
+    struct {
+        // Only valid if device_type is NK3
+        uint8_t pgp_admin_pin_retries;    
+        uint8_t pgp_user_pin_retries;    
+        uint32_t firmware_version;
+    } nk3_extra_info;
+};
+
 
 struct WriteToOTPSlot {
     //admin auth
