@@ -39,6 +39,7 @@ int nk3_reset(struct Device *dev, const char * new_pin) {
 
     if (!dev->mp_devhandle_ccid) {
         // Not an NK3
+        printf("No Nitrokey 3 found. No operation performed\n");
         return RET_NO_ERROR;
     }
     
@@ -52,6 +53,7 @@ int nk3_reset(struct Device *dev, const char * new_pin) {
 
 
     if (usb_desc.idVendor != NITROKEY_USB_VID || usb_desc.idProduct != NITROKEY_3_USB_PID) {
+        printf("No Nitrokey 3 found. No operation performed\n");
         return RET_NO_ERROR;
     }
 
