@@ -23,6 +23,7 @@
 #include "operations.h"
 #include "return_codes.h"
 #include "utils.h"
+#include "operations_ccid.h"
 #include "version.h"
 #include <stdio.h>
 #include <string.h>
@@ -38,8 +39,9 @@ void print_help(char *app_name) {
            "\t%s version\n"
            "\t%s check <HOTP CODE>\n"
            "\t%s regenerate <ADMIN PIN>\n"
-           "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]\n",
-           app_name, app_name, app_name, app_name, app_name, app_name);
+           "\t%s set <BASE32 HOTP SECRET> <ADMIN PIN> [COUNTER]\n"
+           "\t%s nk3-change-pin <old-pin> <new-pin>\n",
+           app_name, app_name, app_name, app_name, app_name, app_name, app_name);
 }
 
 
@@ -143,6 +145,10 @@ int parse_cmd_and_run(int argc, char *const *argv) {
             case 'c':
                 if (argc != 3) break;
                 res = check_code_on_device(&dev, argv[2]);
+                break;
+            case 'n':
+                if (strcmp(argv[1], "nk3-change-pin") != 0 || argc != 4) break;
+                res = nk3_change_pin(&dev, argv[2], argv[3]);
                 break;
             case 's':
                 if (argc != 4 && argc != 5) break;
