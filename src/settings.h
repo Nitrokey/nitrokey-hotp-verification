@@ -44,7 +44,7 @@
 // #define FEATURE_CCID_ASK_FOR_PIN_ON_ERROR
 
 // Use the provided PIN for authentication over CCID
-// #define CCID_AUTHENTICATE 
+// #define CCID_AUTHENTICATE
 
 // Attempt to authenticate before setting the PIN, if no pin is present, create the PIN
 #define CCID_SECRETS_AUTHENTICATE_OR_CREATE_PIN

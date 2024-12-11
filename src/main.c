@@ -24,7 +24,6 @@
 #include "operations_ccid.h"
 #include "return_codes.h"
 #include "utils.h"
-#include "operations_ccid.h"
 #include "version.h"
 #include <stdio.h>
 #include <string.h>
@@ -100,7 +99,7 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                 break;
             case 'i': {// id | info
                 struct FullResponseStatus status;
-                memset(&status, 0, sizeof (struct FullResponseStatus));
+                memset(&status, 0, sizeof(struct FullResponseStatus));
 
                 res = device_get_status(&dev, &status);
                 check_ret((res != RET_NO_ERROR) && (res != RET_NO_PIN_ATTEMPTS), res);
@@ -113,7 +112,7 @@ int parse_cmd_and_run(int argc, char *const *argv) {
                     printf("\tCard serial: ");
                     print_card_serial(&status.response_status);
                     if (status.device_type == Nk3) {
-                         printf("\tFirmware Nitrokey 3: v%d.%d.%d\n",
+                        printf("\tFirmware Nitrokey 3: v%d.%d.%d\n",
                                (status.nk3_extra_info.firmware_version >> 22) & 0b1111111111,
                                (status.nk3_extra_info.firmware_version >> 6) & 0xFFFF,
                                status.nk3_extra_info.firmware_version & 0b111111);
@@ -167,7 +166,7 @@ int parse_cmd_and_run(int argc, char *const *argv) {
             case 'r':
                 if (strncmp(argv[1], "reset", 15) == 0) {
                     if (argc != 2 && argc != 3) break;
-                    res = nk3_reset(&dev, argc == 3 ? argv[2]: NULL);
+                    res = nk3_reset(&dev, argc == 3 ? argv[2] : NULL);
                 } else if (strncmp(argv[1], "regenerate", 15) == 0) {
                     if (argc != 3) break;
                     res = regenerate_AES_key(&dev, argv[2]);
