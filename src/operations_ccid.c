@@ -32,8 +32,7 @@
 #include <string.h>
 
 
-
-int nk3_reset(struct Device *dev, const char * new_pin) {
+int nk3_reset(struct Device *dev, const char *new_pin) {
     libusb_device *usb_dev;
     struct libusb_device_descriptor usb_desc;
 
@@ -42,7 +41,7 @@ int nk3_reset(struct Device *dev, const char * new_pin) {
         printf("No Nitrokey 3 found. No operation performed\n");
         return RET_NO_ERROR;
     }
-    
+
     usb_dev = libusb_get_device(dev->mp_devhandle_ccid);
 
     int r = libusb_get_device_descriptor(usb_dev, &usb_desc);
@@ -64,12 +63,12 @@ int nk3_reset(struct Device *dev, const char * new_pin) {
 
     // encode ccid wrapper
     icc_actual_length = icc_compose(dev->ccid_buffer_out, sizeof dev->ccid_buffer_out,
-                                             0x6F, icc_actual_length,
-                                             0, 0, 0, buf);
+                                    0x6F, icc_actual_length,
+                                    0, 0, 0, buf);
     // send
     IccResult iccResult;
     r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
-                                dev->ccid_buffer_out, icc_actual_length, &iccResult);
+                            dev->ccid_buffer_out, icc_actual_length, &iccResult);
     if (r != 0) {
         return r;
     }
@@ -116,13 +115,13 @@ int set_pin_ccid(struct Device *dev, const char *admin_PIN) {
     return 0;
 }
 
-int nk3_change_pin(struct Device *dev, const char *old_pin, const char*new_pin) {
+int nk3_change_pin(struct Device *dev, const char *old_pin, const char *new_pin) {
     libusb_device *usb_dev;
     struct libusb_device_descriptor usb_desc;
 
     if (!dev->mp_devhandle_ccid) {
         printf("No Nitrokey 3 found. No operation performed\n");
-        return RET_NO_ERROR;    
+        return RET_NO_ERROR;
     }
 
     usb_dev = libusb_get_device(dev->mp_devhandle_ccid);
@@ -136,22 +135,22 @@ int nk3_change_pin(struct Device *dev, const char *old_pin, const char*new_pin) 
 
     if (usb_desc.idVendor != NITROKEY_USB_VID || usb_desc.idProduct != NITROKEY_3_USB_PID) {
         printf("No Nitrokey 3 found. No operation performed\n");
-        return RET_NO_ERROR;    
+        return RET_NO_ERROR;
     }
 
     TLV tlvs[] = {
-        {
-            .tag = Tag_Password,
-            .length = strnlen(old_pin, MAX_PIN_SIZE_CCID),
-            .type = 'S',
-            .v_str = old_pin,
-        },
-        {
-            .tag = Tag_NewPassword,
-            .length = strnlen(new_pin, MAX_PIN_SIZE_CCID),
-            .type = 'S',
-            .v_str = new_pin,
-        },
+            {
+                    .tag = Tag_Password,
+                    .length = strnlen(old_pin, MAX_PIN_SIZE_CCID),
+                    .type = 'S',
+                    .v_str = old_pin,
+            },
+            {
+                    .tag = Tag_NewPassword,
+                    .length = strnlen(new_pin, MAX_PIN_SIZE_CCID),
+                    .type = 'S',
+                    .v_str = new_pin,
+            },
     };
     // encode
     uint32_t icc_actual_length = icc_pack_tlvs_for_sending(dev->ccid_buffer_out, sizeof dev->ccid_buffer_out,
@@ -159,7 +158,7 @@ int nk3_change_pin(struct Device *dev, const char *old_pin, const char*new_pin) 
     // send
     IccResult iccResult;
     r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
-                                dev->ccid_buffer_out, icc_actual_length, &iccResult);
+                            dev->ccid_buffer_out, icc_actual_length, &iccResult);
     if (r != 0) {
         return r;
     }
@@ -223,15 +222,14 @@ int authenticate_or_set_ccid(struct Device *dev, const char *admin_PIN) {
 }
 
 
-int delete_secret_on_device_ccid(struct Device *dev) {    
+int delete_secret_on_device_ccid(struct Device *dev) {
     TLV tlvs[] = {
-        {
-            .tag = Tag_CredentialId,
-            .length = SLOT_NAME_LEN,
-            .type = 'S',
-            .v_str = SLOT_NAME,
-        }
-    };
+            {
+                    .tag = Tag_CredentialId,
+                    .length = SLOT_NAME_LEN,
+                    .type = 'S',
+                    .v_str = SLOT_NAME,
+            }};
 
     clean_buffers(dev);
     // encode
@@ -275,11 +273,11 @@ int set_secret_on_device_ccid(struct Device *dev, const char *admin_PIN, const c
     }
 
 #ifdef CCID_SECRETS_AUTHENTICATE_OR_CREATE_PIN
-        if (strnlen(admin_PIN, 30) > 0) {
-            if (authenticate_or_set_ccid(dev, admin_PIN) != RET_NO_ERROR) {
-                return RET_SECURITY_STATUS_NOT_SATISFIED;
-            }
+    if (strnlen(admin_PIN, 30) > 0) {
+        if (authenticate_or_set_ccid(dev, admin_PIN) != RET_NO_ERROR) {
+            return RET_SECURITY_STATUS_NOT_SATISFIED;
         }
+    }
 #endif
     TLV tlvs[] = {
             {
@@ -317,7 +315,7 @@ int set_secret_on_device_ccid(struct Device *dev, const char *admin_PIN, const c
     // send
     IccResult iccResult;
     r = ccid_process_single(dev->mp_devhandle_ccid, dev->ccid_buffer_in, sizeof dev->ccid_buffer_in,
-                                dev->ccid_buffer_out, icc_actual_length, &iccResult);
+                            dev->ccid_buffer_out, icc_actual_length, &iccResult);
 
 
     if (r != 0) {

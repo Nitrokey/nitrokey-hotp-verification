@@ -117,11 +117,11 @@ struct ResponseStatus {
 };
 
 enum DeviceType {
-  Unknown = 0,
-  Nk3,
-  NkPro2,  
-  NkStorage,
-  LibremKey,
+    Unknown = 0,
+    Nk3,
+    NkPro2,
+    NkStorage,
+    LibremKey,
 };
 
 struct FullResponseStatus {
@@ -129,8 +129,8 @@ struct FullResponseStatus {
     struct ResponseStatus response_status;
     struct {
         // Only valid if device_type is NK3
-        uint8_t pgp_admin_pin_retries;    
-        uint8_t pgp_user_pin_retries;    
+        uint8_t pgp_admin_pin_retries;
+        uint8_t pgp_user_pin_retries;
         uint32_t firmware_version;
     } nk3_extra_info;
 };
