@@ -223,7 +223,11 @@ int ccid_process_single(libusb_device_handle *handle, uint8_t *receiving_buffer,
                 fflush(stdout);
             }
             continue;
+        } else if (prev_status == AWAITING_FOR_TOUCH_STATUS_CODE){
+            printf("\n");
+            fflush(stdout);
         }
+
         prev_status = iccResult.status;
         if (iccResult.chain == 0 || iccResult.chain == 2) {
             if (result != NULL) {
